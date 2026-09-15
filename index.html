@@ -8,6 +8,70 @@
 </head>
 <body>
 
+    <!-- --- AUTHENTICATION & LOGIN SCREEN --- -->
+    <div id="login-screen" class="login-screen-wrapper">
+        <div class="login-card animate-fade">
+            <div class="login-header">
+                <div class="login-brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                    </svg>
+                </div>
+                <h2>JF 3D Studio</h2>
+                <p>Sistema de Gestión y Costos</p>
+            </div>
+
+            <!-- Auth Mode Switcher (Tabs) -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tab-auth-login" onclick="switchAuthTab('login')">
+                    Iniciar Sesión
+                </button>
+                <button type="button" class="auth-tab-btn" id="tab-auth-register" onclick="switchAuthTab('register')">
+                    Registrarse
+                </button>
+            </div>
+
+            <form id="form-auth" onsubmit="handleAuthSubmit(event)">
+                <div id="auth-alert" class="auth-alert" style="display: none;"></div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="auth-email">Correo Electrónico</label>
+                    <input type="email" id="auth-email" placeholder="usuario@jf3d.com" required autocomplete="email">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label for="auth-password">Contraseña</label>
+                    <div style="position: relative;">
+                        <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-password')" tabindex="-1">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+
+                <div id="register-password-confirm-box" class="form-group" style="display: none; margin-bottom: 18px;">
+                    <label for="auth-password-confirm">Confirmar Contraseña</label>
+                    <input type="password" id="auth-password-confirm" placeholder="••••••••" autocomplete="new-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btn-auth-submit" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600;">
+                    Ingresar al Sistema
+                </button>
+            </form>
+
+            <div class="auth-footer-divider">
+                <span>o acceso de contingencia</span>
+            </div>
+
+            <button type="button" class="btn-quick-access" onclick="handleQuickStudioAccess()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                </svg>
+                Ingreso con Clave Maestra del Taller
+            </button>
+        </div>
+    </div>
+
     <!-- --- UNIFIED APPLICATION CONTAINER --- -->
     <div id="app-container">
         
@@ -23,10 +87,17 @@
                     <span class="mobile-app-name">JF 3D Studio</span>
                 </div>
             </div>
-            <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión en la nube">
-                <span class="cloud-status-dot"></span>
-                <span class="cloud-status-text">Modo Local</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión en la nube">
+                    <span class="cloud-status-dot"></span>
+                    <span class="cloud-status-text">Modo Local</span>
+                </button>
+                <button type="button" class="mobile-logout-btn" onclick="logoutUser()" title="Cerrar Sesión">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <!-- --- GLOBAL SYSTEM SIDEBAR (SCREEN ONLY) --- -->
@@ -76,11 +147,24 @@
                 </button>
             </nav>
             
-            <div class="sidebar-cloud-footer" style="padding: 12px 14px; border-top: 1px solid var(--border-color); margin-top: auto;">
+            <div class="sidebar-cloud-footer" style="padding: 12px 14px; border-top: 1px solid var(--border-color); margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
                 <button type="button" class="btn-cloud-status" id="btn-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión a la base de datos en la nube">
                     <span class="cloud-status-dot" id="cloud-status-dot"></span>
                     <span id="cloud-status-text">Modo Local</span>
                 </button>
+                <div class="user-session-bar" id="user-session-bar" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px;">
+                    <div class="user-info-pill" style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                        <div class="user-avatar" id="user-avatar" style="width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #a855f7); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;">
+                            JF
+                        </div>
+                        <span id="user-email-display" style="font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 140px;">Administrador</span>
+                    </div>
+                    <button type="button" class="btn-logout" onclick="logoutUser()" title="Cerrar Sesión" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: color 0.2s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </aside>
 

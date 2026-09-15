@@ -112,9 +112,230 @@ const DEFAULT_SUPABASE_URL = 'https://uhwadjswtcdarhidvqxr.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_miv4XL14Dlnc54TO_8ebiQ_4WeAVDzq';
 let supabaseClient = null;
 
+// --- USER AUTHENTICATION & LOGIN LOGIC ---
+let currentAuthUser = null;
+let currentAuthTab = 'login';
+const MASTER_WORKSHOP_PIN = '1234'; // Clave maestra de taller offline
+
+window.lockApp = function() {
+    const appCont = document.getElementById('app-container');
+    const loginScreen = document.getElementById('login-screen');
+    if (appCont) appCont.classList.add('auth-locked');
+    if (loginScreen) loginScreen.classList.remove('hidden');
+};
+
+window.unlockApp = function() {
+    const appCont = document.getElementById('app-container');
+    const loginScreen = document.getElementById('login-screen');
+    if (appCont) appCont.classList.remove('auth-locked');
+    if (loginScreen) loginScreen.classList.add('hidden');
+};
+
+window.setUserSession = function(user) {
+    currentAuthUser = user;
+    const emailDisp = document.getElementById('user-email-display');
+    const avatar = document.getElementById('user-avatar');
+    
+    const email = user?.email || 'Administrador';
+    if (emailDisp) emailDisp.textContent = email;
+    
+    if (avatar) {
+        if (email && email.includes('@')) {
+            const initial = email.substring(0, 2).toUpperCase();
+            avatar.textContent = initial;
+        } else {
+            avatar.textContent = 'JF';
+        }
+    }
+};
+
+window.initAuth = async function() {
+    // 1. Check if offline master session is stored
+    if (localStorage.getItem('jf3d_offline_session') === 'true') {
+        setUserSession({ email: 'taller@jf3d.local', isOffline: true });
+        unlockApp();
+        return;
+    }
+
+    // 2. If Supabase is available, check active session
+    if (supabaseClient && supabaseClient.auth) {
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                setUserSession(session.user);
+                unlockApp();
+                return;
+            }
+        } catch (e) {
+            console.warn('Error checking Supabase session:', e);
+        }
+    }
+
+    // 3. Default: Locked
+    lockApp();
+};
+
+window.switchAuthTab = function(tab) {
+    currentAuthTab = tab;
+    const btnLogin = document.getElementById('tab-auth-login');
+    const btnRegister = document.getElementById('tab-auth-register');
+    const confirmBox = document.getElementById('register-password-confirm-box');
+    const submitBtn = document.getElementById('btn-auth-submit');
+    const alertBox = document.getElementById('auth-alert');
+    if (alertBox) alertBox.style.display = 'none';
+
+    if (tab === 'login') {
+        if (btnLogin) btnLogin.classList.add('active');
+        if (btnRegister) btnRegister.classList.remove('active');
+        if (confirmBox) confirmBox.style.display = 'none';
+        if (submitBtn) submitBtn.textContent = 'Ingresar al Sistema';
+    } else {
+        if (btnRegister) btnRegister.classList.add('active');
+        if (btnLogin) btnLogin.classList.remove('active');
+        if (confirmBox) confirmBox.style.display = 'block';
+        if (submitBtn) submitBtn.textContent = 'Crear Cuenta y Entrar';
+    }
+};
+
+window.togglePasswordVisibility = function(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+};
+
+window.showAuthAlert = function(msg, isSuccess = false) {
+    const alertBox = document.getElementById('auth-alert');
+    if (!alertBox) return;
+    alertBox.className = 'auth-alert ' + (isSuccess ? 'success' : 'error');
+    alertBox.textContent = msg;
+    alertBox.style.display = 'flex';
+};
+
+window.handleAuthSubmit = async function(event) {
+    if (event) event.preventDefault();
+    const email = document.getElementById('auth-email')?.value.trim();
+    const password = document.getElementById('auth-password')?.value;
+    const confirmPassword = document.getElementById('auth-password-confirm')?.value;
+    const submitBtn = document.getElementById('btn-auth-submit');
+
+    if (!email || !password) {
+        showAuthAlert('Por favor completa todos los campos.');
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthAlert('La contraseña debe tener al menos 6 caracteres.');
+        return;
+    }
+
+    if (currentAuthTab === 'register' && password !== confirmPassword) {
+        showAuthAlert('Las contraseñas ingresadas no coinciden.');
+        return;
+    }
+
+    const originalBtnText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Procesando...';
+    }
+
+    try {
+        if (currentAuthTab === 'login') {
+            // Attempt Supabase Login
+            if (supabaseClient && supabaseClient.auth) {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        showAuthAlert('Correo o contraseña incorrectos. Si aún no te registraste, selecciona la pestaña "Registrarse".');
+                    } else {
+                        showAuthAlert(`Error: ${error.message}`);
+                    }
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
+                    return;
+                }
+
+                setUserSession(data.user);
+                unlockApp();
+                showToast(`¡Bienvenido/a, ${data.user.email}!`);
+            } else {
+                // Offline fallback login check
+                if (password === MASTER_WORKSHOP_PIN || password === 'admin' || password === 'jf3d') {
+                    localStorage.setItem('jf3d_offline_session', 'true');
+                    setUserSession({ email: email || 'taller@jf3d.local', isOffline: true });
+                    unlockApp();
+                    showToast('Ingresaste en modo taller local');
+                } else {
+                    showAuthAlert('Sin conexión a Supabase. Ingresa la clave maestra del taller (1234).');
+                }
+            }
+        } else {
+            // Register new account with Supabase
+            if (supabaseClient && supabaseClient.auth) {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    showAuthAlert(`Error al registrar: ${error.message}`);
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
+                    return;
+                }
+
+                if (data.session && data.user) {
+                    setUserSession(data.user);
+                    unlockApp();
+                    showToast('¡Cuenta creada y sesión iniciada!');
+                } else {
+                    showAuthAlert('¡Cuenta creada exitosamente! Ya puedes iniciar sesión con tu correo y contraseña.', true);
+                    switchAuthTab('login');
+                }
+            } else {
+                showAuthAlert('Para registrar una cuenta nueva en la nube, la base de datos debe estar conectada.');
+            }
+        }
+    } catch (err) {
+        console.error('Auth error:', err);
+        showAuthAlert('Ocurrió un error inesperado al procesar la autenticación.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    }
+};
+
+window.handleQuickStudioAccess = function() {
+    const pin = prompt('Ingresa la Clave Maestra del Taller para acceso rápido offline:', '');
+    if (!pin) return;
+    
+    if (pin.trim() === MASTER_WORKSHOP_PIN || pin.trim() === 'jf3d' || pin.trim() === 'admin') {
+        localStorage.setItem('jf3d_offline_session', 'true');
+        setUserSession({ email: 'taller@jf3d.local', isOffline: true });
+        unlockApp();
+        showToast('Acceso maestro concedido');
+    } else {
+        alert('Clave maestra incorrecta.');
+    }
+};
+
+window.logoutUser = async function() {
+    if (!confirm('¿Deseas cerrar la sesión actual de JF 3D Studio?')) return;
+
+    try {
+        if (supabaseClient && supabaseClient.auth) {
+            await supabaseClient.auth.signOut();
+        }
+    } catch (e) {
+        console.warn('Error on Supabase signOut:', e);
+    }
+
+    localStorage.removeItem('jf3d_offline_session');
+    currentAuthUser = null;
+    lockApp();
+    showToast('Sesión cerrada.');
+};
+
 window.initSupabase = async function() {
     if (localStorage.getItem('jf3d_cloud_disabled') === 'true') {
         updateCloudStatusBadge(false, 'Modo Local');
+        await initAuth();
         return;
     }
 
@@ -125,6 +346,7 @@ window.initSupabase = async function() {
     
     if (!url || !key) {
         updateCloudStatusBadge(false, 'Modo Local');
+        await initAuth();
         return;
     }
 
@@ -134,11 +356,31 @@ window.initSupabase = async function() {
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
         console.warn('Supabase SDK not loaded yet. Running in local mode.');
         updateCloudStatusBadge(false, 'Modo Local');
+        await initAuth();
         return;
     }
     
     try {
         supabaseClient = window.supabase.createClient(url, key);
+
+        // Listen for auth state changes from Supabase
+        if (supabaseClient.auth) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    setUserSession(session.user);
+                    unlockApp();
+                } else if (event === 'SIGNED_OUT') {
+                    currentAuthUser = null;
+                    if (localStorage.getItem('jf3d_offline_session') !== 'true') {
+                        lockApp();
+                    }
+                }
+            });
+        }
+
+        // Check authentication state
+        await initAuth();
+
         const { data, error } = await supabaseClient.from('inventory').select('id').limit(1);
         if (error) {
             console.error('Supabase connection error:', error);
@@ -154,6 +396,7 @@ window.initSupabase = async function() {
     } catch (err) {
         console.error('Failed to initialize Supabase client:', err);
         updateCloudStatusBadge(false, 'Error');
+        await initAuth();
     }
 };
 
@@ -2696,3 +2939,13 @@ window.updateDashboardData = function() {
         }
     }
 };
+
+// Automatically run auth check on startup
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof initAuth === 'function') initAuth();
+    });
+} else {
+    if (typeof initAuth === 'function') initAuth();
+}
+
