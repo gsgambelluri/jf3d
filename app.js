@@ -2390,27 +2390,20 @@ window.renderInternalProductTable = function() {
         
         tr.innerHTML = `
             <td><strong>${prod.title}</strong></td>
-            <td class="col-suggested" style="text-align: center;"><strong style="color:var(--success); font-size:13px;">$ ${suggested.toFixed(2)}</strong></td>
+            <td class="col-suggested" style="text-align: center;"><strong style="color:var(--success); font-size:14px;">$ ${suggested.toFixed(2)}</strong></td>
             <td class="col-time" style="text-align: center;">⏱️ ${hours.toFixed(1)}h</td>
-            <td class="col-detail" style="text-align: center;">${weight.toFixed(0)}g</td>
-            <td class="col-detail" style="text-align: center;">$ ${matCost.toFixed(2)}</td>
-            <td class="col-detail" style="text-align: center;">$ ${elecCost.toFixed(2)}</td>
-            <td class="col-detail" style="text-align: center;">$ ${depCost.toFixed(2)}</td>
-            <td class="col-detail" style="text-align: center;">$ ${errCost.toFixed(2)}</td>
-            <td class="col-detail" style="text-align: center;">$ ${net.toFixed(2)}</td>
-            <td class="col-detail" style="text-align: center;">$ ${profit.toFixed(2)} (${prod.markupPercent || 0}%)</td>
             <td class="col-actions" style="text-align: center;">
                 <div style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;">
-                    <button class="btn btn-secondary btn-small btn-view-prod-action" onclick="openViewInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto; color:var(--jf-blue); border-color:rgba(0,153,255,0.35);" title="Ver todos los datos y desglose de costos">
+                    <button class="btn btn-secondary btn-small btn-view-prod-action" onclick="openViewInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:var(--jf-blue); border-color:rgba(0,153,255,0.35);" title="Ver todos los datos y desglose de costos">
                         👁️ Ver
                     </button>
-                    <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto;" title="Editar dimensiones y parámetros">
+                    <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Editar dimensiones y parámetros">
                         Editar
                     </button>
-                    <button class="btn btn-primary btn-small" onclick="publishProductToDigital('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto;" title="Publicar al catálogo de ventas">
+                    <button class="btn btn-primary btn-small" onclick="publishProductToDigital('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Publicar al catálogo de ventas">
                         Publicar
                     </button>
-                    <button class="btn btn-secondary btn-small" onclick="deleteInternalProduct('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto; color:var(--danger); border-color:rgba(239,68,68,0.2);" title="Eliminar del catálogo interno">
+                    <button class="btn btn-secondary btn-small" onclick="deleteInternalProduct('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:var(--danger); border-color:rgba(239,68,68,0.2);" title="Eliminar del catálogo interno">
                         Eliminar
                     </button>
                 </div>
