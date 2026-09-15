@@ -108,11 +108,18 @@ const elements = {
 };
 
 // --- SUPABASE CLOUD DATABASE SERVICE ---
+const DEFAULT_SUPABASE_URL = 'https://uhwadjswtcdarhidvqxr.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_miv4XL14Dlnc54TO_8ebiQ_4WeAVDzq';
 let supabaseClient = null;
 
 window.initSupabase = async function() {
-    let url = localStorage.getItem('jf3d_supabase_url');
-    const key = localStorage.getItem('jf3d_supabase_key');
+    if (localStorage.getItem('jf3d_cloud_disabled') === 'true') {
+        updateCloudStatusBadge(false, 'Modo Local');
+        return;
+    }
+
+    let url = localStorage.getItem('jf3d_supabase_url') || DEFAULT_SUPABASE_URL;
+    const key = localStorage.getItem('jf3d_supabase_key') || DEFAULT_SUPABASE_KEY;
     
     updateCloudStatusBadge(false, 'Conectando...');
     
@@ -146,17 +153,15 @@ window.initSupabase = async function() {
         await syncFromCloud();
     } catch (err) {
         console.error('Failed to initialize Supabase client:', err);
-        updateCloudStatusBadge(false, 'Error Conexión');
+        updateCloudStatusBadge(false, 'Error');
     }
 };
 
 function updateCloudStatusBadge(isConnected, text) {
-    const dot = document.getElementById('cloud-status-dot');
-    const label = document.getElementById('cloud-status-text');
+    const dot = document.querySelector('.cloud-status-dot') || document.getElementById('cloud-status-dot');
+    const label = document.getElementById('cloud-status-text') || document.getElementById('cloud-status-label');
     if (dot) {
-        dot.classList.remove('connected', 'syncing');
-        if (isConnected) dot.classList.add('connected');
-        else if (text === 'Conectando...' || text === 'Sincronizando...') dot.classList.add('syncing');
+        dot.className = 'cloud-status-dot ' + (isConnected ? 'connected' : 'offline');
     }
     if (label) label.textContent = text;
 }
@@ -169,8 +174,8 @@ window.openSupabaseModal = function() {
     const inputKey = document.getElementById('supabase-anon-key');
     const btnDisconnect = document.getElementById('btn-disconnect-supabase');
     
-    if (inputUrl) inputUrl.value = localStorage.getItem('jf3d_supabase_url') || '';
-    if (inputKey) inputKey.value = localStorage.getItem('jf3d_supabase_key') || '';
+    if (inputUrl) inputUrl.value = localStorage.getItem('jf3d_supabase_url') || DEFAULT_SUPABASE_URL;
+    if (inputKey) inputKey.value = localStorage.getItem('jf3d_supabase_key') || DEFAULT_SUPABASE_KEY;
     if (btnDisconnect) btnDisconnect.style.display = supabaseClient ? 'block' : 'none';
     
     modal.classList.add('active');
@@ -193,6 +198,7 @@ window.saveSupabaseConfig = async function() {
     // Auto-clean URL
     url = url.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
     
+    localStorage.removeItem('jf3d_cloud_disabled');
     localStorage.setItem('jf3d_supabase_url', url);
     localStorage.setItem('jf3d_supabase_key', key);
     
@@ -203,6 +209,7 @@ window.saveSupabaseConfig = async function() {
 
 window.disconnectSupabase = function() {
     if (confirm('¿Deseas desconectar la base de datos en la nube y volver al Modo Local?')) {
+        localStorage.setItem('jf3d_cloud_disabled', 'true');
         localStorage.removeItem('jf3d_supabase_url');
         localStorage.removeItem('jf3d_supabase_key');
         supabaseClient = null;
