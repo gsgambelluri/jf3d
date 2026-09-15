@@ -13,12 +13,12 @@ let appState = {
         catalogSubtitle: "Impresiones 3D y Diseños Personalizados",
         backTitle: "¡Gracias por elegirnos!",
         backSubtitle: "Hacemos realidad tus ideas en 3D",
-        accentColor: "#4f46e5",
+        accentColor: "#0099ff",
         textColor: "#1f2937",
         bgColor: "#ffffff",
         theme: "modern", // modern, luxury, industrial
         margins: "normal", // narrow, normal, wide
-        logoImg: "",
+        logoImg: "logo.jpg",
         coverImg: "",
         showCover: true,
         showBack: true,
@@ -2390,17 +2390,20 @@ window.renderInternalProductTable = function() {
         
         tr.innerHTML = `
             <td><strong>${prod.title}</strong></td>
-            <td style="text-align: center;">${weight.toFixed(0)}g</td>
-            <td style="text-align: center;">$ ${matCost.toFixed(2)}</td>
-            <td style="text-align: center;">${hours.toFixed(1)}h</td>
-            <td style="text-align: center;">$ ${elecCost.toFixed(2)}</td>
-            <td style="text-align: center;">$ ${depCost.toFixed(2)}</td>
-            <td style="text-align: center;">$ ${errCost.toFixed(2)}</td>
-            <td style="text-align: center;">$ ${net.toFixed(2)}</td>
-            <td style="text-align: center;">$ ${profit.toFixed(2)} (${prod.markupPercent || 0}%)</td>
-            <td style="text-align: center;"><strong style="color:var(--success);">$ ${suggested.toFixed(2)}</strong></td>
-            <td style="text-align: center;">
+            <td class="col-suggested" style="text-align: center;"><strong style="color:var(--success); font-size:13px;">$ ${suggested.toFixed(2)}</strong></td>
+            <td class="col-time" style="text-align: center;">⏱️ ${hours.toFixed(1)}h</td>
+            <td class="col-detail" style="text-align: center;">${weight.toFixed(0)}g</td>
+            <td class="col-detail" style="text-align: center;">$ ${matCost.toFixed(2)}</td>
+            <td class="col-detail" style="text-align: center;">$ ${elecCost.toFixed(2)}</td>
+            <td class="col-detail" style="text-align: center;">$ ${depCost.toFixed(2)}</td>
+            <td class="col-detail" style="text-align: center;">$ ${errCost.toFixed(2)}</td>
+            <td class="col-detail" style="text-align: center;">$ ${net.toFixed(2)}</td>
+            <td class="col-detail" style="text-align: center;">$ ${profit.toFixed(2)} (${prod.markupPercent || 0}%)</td>
+            <td class="col-actions" style="text-align: center;">
                 <div style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;">
+                    <button class="btn btn-secondary btn-small btn-view-prod-action" onclick="openViewInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto; color:var(--jf-blue); border-color:rgba(0,153,255,0.35);" title="Ver todos los datos y desglose de costos">
+                        👁️ Ver
+                    </button>
                     <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:10px; width:auto;" title="Editar dimensiones y parámetros">
                         Editar
                     </button>
@@ -2416,6 +2419,103 @@ window.renderInternalProductTable = function() {
         
         tbody.appendChild(tr);
     });
+};
+
+window.openViewInternalProductModal = function(id) {
+    const prod = (appState.internalProducts || []).find(p => p.id === id);
+    if (!prod) return;
+
+    const modal = document.getElementById('modal-view-internal-product');
+    const title = document.getElementById('view-prod-modal-title');
+    const body = document.getElementById('view-prod-modal-body');
+    const btnEdit = document.getElementById('view-prod-btn-edit');
+
+    if (title) title.textContent = prod.title;
+    if (btnEdit) {
+        btnEdit.onclick = () => {
+            closeViewInternalProductModal();
+            openEditInternalProductModal(prod.id);
+        };
+    }
+
+    let spoolName = 'Bobina General';
+    if (prod.spoolId && prod.spoolId !== 'default_12000_1000') {
+        const spool = (appState.inventory || []).find(s => s.id === prod.spoolId);
+        if (spool) spoolName = `${spool.brand} ${spool.material} (${spool.color})`;
+    }
+
+    const weight = prod.weightGrams || 0;
+    const hours = prod.hours || 0;
+    const matCost = prod.materialCost || 0;
+    const elecCost = prod.electricityCost || 0;
+    const depCost = prod.depreciationCost || 0;
+    const errPercent = prod.errorMarginPercent || 10;
+    const errCost = prod.errorMarginCost || 0;
+    const netCost = prod.netCost || 0;
+    const markupPercent = prod.markupPercent || 150;
+    const profitCost = prod.profitCost || 0;
+    const suggested = prod.suggestedPrice || 0;
+
+    if (body) {
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Main KPI Card -->
+                <div style="background: linear-gradient(135deg, rgba(236,72,153,0.12), rgba(0,153,255,0.12)); border: 1px solid rgba(0,153,255,0.3); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px;">Valor Sugerido</span>
+                        <h2 style="font-size: 24px; font-weight: 700; color: var(--success); margin-top: 2px;">$ ${suggested.toFixed(2)}</h2>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 11px; color: var(--text-secondary);">Tiempo de Impresión</span>
+                        <div style="font-size: 17px; font-weight: 700; color: white; margin-top: 2px;">⏱️ ${hours.toFixed(1)} hs</div>
+                    </div>
+                </div>
+
+                <!-- Complete Cost Parameters Breakdown -->
+                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 9px; font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-secondary);">🧵 Filamento:</span>
+                        <strong style="color: white; text-align: right; max-width: 65%;">${spoolName}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">⚖️ Peso del Modelo:</span>
+                        <strong style="color: white;">${weight.toFixed(0)} gramos</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">💵 Costo de Material:</span>
+                        <strong style="color: white;">$ ${matCost.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">⚡ Electricidad (${prod.electricityRate || 15}/h):</span>
+                        <strong style="color: white;">$ ${elecCost.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">🛠️ Desgaste Impresora (${prod.depreciationRate || 25}/h):</span>
+                        <strong style="color: white;">$ ${depCost.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">⚠️ Margen de Error (${errPercent}%):</span>
+                        <strong style="color: white;">$ ${errCost.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                        <span style="color: var(--text-primary); font-weight: 600;">📊 Costo Total de Producción:</span>
+                        <strong style="color: #cbd5e1; font-weight: 700;">$ ${netCost.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">📈 Margen Ganancia (${markupPercent}%):</span>
+                        <strong style="color: var(--jf-blue); font-weight: 700;">+ $ ${profitCost.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (modal) modal.classList.add('active');
+};
+
+window.closeViewInternalProductModal = function() {
+    const modal = document.getElementById('modal-view-internal-product');
+    if (modal) modal.classList.remove('active');
 };
 
 window.deleteInternalProduct = function(id) {

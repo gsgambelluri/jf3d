@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JF 3D STUDIO - Sistema Integrado de Gestión</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,11 +13,7 @@
     <div id="login-screen" class="login-screen-wrapper">
         <div class="login-card animate-fade">
             <div class="login-header">
-                <div class="login-brand-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                    </svg>
-                </div>
+                <img src="logo.jpg" alt="JF 3D Studio" class="login-logo-img">
                 <h2>JF 3D Studio</h2>
                 <p>Sistema de Gestión y Costos</p>
             </div>
@@ -78,11 +75,7 @@
         <!-- --- MOBILE TOP HEADER (MOBILE ONLY) --- -->
         <header class="mobile-topbar no-print">
             <div class="mobile-brand">
-                <div class="brand-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                    </svg>
-                </div>
+                <img src="logo.jpg" alt="JF 3D" class="header-logo-img">
                 <div class="mobile-brand-title">
                     <span class="mobile-app-name">JF 3D Studio</span>
                 </div>
@@ -103,11 +96,7 @@
         <!-- --- GLOBAL SYSTEM SIDEBAR (SCREEN ONLY) --- -->
         <aside class="system-sidebar no-print">
             <div class="sidebar-brand">
-                <div class="brand-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                    </svg>
-                </div>
+                <img src="logo.jpg" alt="JF 3D Studio" class="sidebar-logo-img">
                 <div class="brand-text">
                     <h2>JF 3D Studio</h2>
                     <span>Gestión de Impresión</span>
@@ -662,16 +651,16 @@
                             <thead>
                                 <tr>
                                     <th>Nombre del Producto</th>
-                                    <th style="text-align: center;">Peso (g)</th>
-                                    <th style="text-align: center;">Costo Mat.</th>
-                                    <th style="text-align: center;">Tiempo (hs)</th>
-                                    <th style="text-align: center;">Costo Elec.</th>
-                                    <th style="text-align: center;">Desgaste Imp.</th>
-                                    <th style="text-align: center;">Margen Error</th>
-                                    <th style="text-align: center;">Costo Prod.</th>
-                                    <th style="text-align: center;">Margen Ganancia</th>
-                                    <th style="text-align: center;">Valor Sugerido</th>
-                                    <th style="text-align: center;">Acciones</th>
+                                    <th class="col-suggested" style="text-align: center;">Valor Sugerido</th>
+                                    <th class="col-time" style="text-align: center;">Tiempo (hs)</th>
+                                    <th class="col-detail" style="text-align: center;">Peso (g)</th>
+                                    <th class="col-detail" style="text-align: center;">Costo Mat.</th>
+                                    <th class="col-detail" style="text-align: center;">Costo Elec.</th>
+                                    <th class="col-detail" style="text-align: center;">Desgaste Imp.</th>
+                                    <th class="col-detail" style="text-align: center;">Margen Error</th>
+                                    <th class="col-detail" style="text-align: center;">Costo Prod.</th>
+                                    <th class="col-detail" style="text-align: center;">Margen Ganancia</th>
+                                    <th class="col-actions" style="text-align: center;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="calculator-internal-table-body">
@@ -898,6 +887,29 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeEditInternalProductModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveEditedInternalProduct()" style="width: auto; padding: 8px 16px;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4b. VIEW INTERNAL PRODUCT DETAILS MODAL (FOR MOBILE AND DESKTOP) -->
+    <div class="modal" id="modal-view-internal-product">
+        <div class="modal-content animate-fade" style="max-width: 480px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;color:var(--jf-blue);">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <h3 id="view-prod-modal-title">Detalles del Producto</h3>
+                </div>
+                <button class="modal-close" onclick="closeViewInternalProductModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="view-prod-modal-body">
+                <!-- Injected dynamically -->
+            </div>
+            <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-secondary" onclick="closeViewInternalProductModal()" style="width: auto; padding: 8px 16px;">Cerrar</button>
+                <button class="btn btn-primary" id="view-prod-btn-edit" style="width: auto; padding: 8px 16px;">Editar Parámetros</button>
             </div>
         </div>
     </div>

@@ -2,22 +2,35 @@
 
 /* --- SCREEN DESIGN SYSTEM --- */
 :root {
-    --bg-dark: #0f1115;
-    --bg-panel: rgba(22, 26, 33, 0.8);
+    --bg-dark: #090b10;
+    --bg-panel: rgba(16, 20, 29, 0.85);
     --border-color: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(99, 102, 241, 0.4);
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
+    --border-hover: rgba(0, 153, 255, 0.45);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    /* JF 3D Official Brand Identity Palette */
+    --jf-pink: #ec4899;
+    --jf-pink-glow: rgba(236, 72, 153, 0.35);
+    --jf-blue: #0099ff;
+    --jf-blue-glow: rgba(0, 153, 255, 0.35);
+    --jf-silver: #cbd5e1;
+    
+    --primary: #0099ff;
+    --primary-hover: #0284c7;
+    --brand-gradient: linear-gradient(135deg, #ec4899 0%, #0099ff 100%);
+    --brand-gradient-hover: linear-gradient(135deg, #db2777 0%, #0284c7 100%);
+    --brand-gradient-horizontal: linear-gradient(90deg, #ec4899 0%, #0099ff 100%);
+    --accent-glow: rgba(0, 153, 255, 0.25);
+    --pink-glow: rgba(236, 72, 153, 0.25);
+    
     --success: #10b981;
     --danger: #ef4444;
-    --accent-glow: rgba(99, 102, 241, 0.15);
     
     /* Catalog Print customization variables (defaults) */
-    --catalog-accent: #111827;
-    --catalog-text: #1f2937;
+    --catalog-accent: #0f172a;
+    --catalog-text: #1e293b;
     --catalog-bg: #ffffff;
     --catalog-font: 'Inter', sans-serif;
 }
@@ -263,14 +276,14 @@ textarea:focus {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    background: var(--brand-gradient);
     color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 153, 255, 0.35);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #4f46e5, #4338ca);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    background: var(--brand-gradient-hover);
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.45);
     transform: translateY(-1px);
 }
 
@@ -1376,10 +1389,25 @@ textarea:focus {
     padding: 0 8px;
 }
 
+.sidebar-logo-img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 14px var(--jf-blue-glow), 0 0 8px var(--jf-pink-glow);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-logo-img:hover {
+    transform: scale(1.08);
+}
+
 .brand-icon {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--primary), #a855f7);
+    background: var(--brand-gradient);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -1441,17 +1469,17 @@ textarea:focus {
 }
 
 .nav-item.active {
-    background-color: var(--accent-glow);
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.15) 0%, rgba(0, 153, 255, 0.12) 100%);
     color: white;
     font-weight: 600;
-    border-left: 3px solid var(--primary);
+    border-left: 3px solid var(--jf-pink);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     padding-left: 11px;
 }
 
 .nav-item.active svg {
-    color: var(--primary);
+    color: var(--jf-blue);
 }
 
 /* System Main Content wrapper */
@@ -2039,21 +2067,14 @@ tr:last-child td {
         gap: 10px;
     }
 
-    .mobile-brand .brand-icon {
+    .header-logo-img {
         width: 34px !important;
         height: 34px !important;
-        border-radius: 9px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, var(--primary), #a855f7);
-        color: white;
-        box-shadow: 0 2px 10px var(--accent-glow);
-    }
-
-    .mobile-brand .brand-icon svg {
-        width: 18px !important;
-        height: 18px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        box-shadow: 0 0 12px var(--jf-blue-glow), 0 0 6px var(--jf-pink-glow);
+        border: 1.5px solid rgba(255, 255, 255, 0.25);
+        flex-shrink: 0;
     }
 
     .mobile-brand-title {
@@ -2065,7 +2086,7 @@ tr:last-child td {
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.3px;
-        background: linear-gradient(to right, #ffffff, #d1d5db);
+        background: linear-gradient(to right, #ffffff, #cbd5e1);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -2138,11 +2159,11 @@ tr:last-child td {
     }
 
     .mobile-nav-item.active {
-        color: #818cf8;
+        color: var(--jf-blue);
     }
 
     .mobile-nav-item.active svg {
-        color: #818cf8;
+        color: var(--jf-blue);
         transform: translateY(-2px);
     }
 
@@ -2158,8 +2179,8 @@ tr:last-child td {
         width: 20px;
         height: 3px;
         border-radius: 3px;
-        background: linear-gradient(90deg, #6366f1, #a855f7);
-        box-shadow: 0 0 10px #6366f1;
+        background: var(--brand-gradient-horizontal);
+        box-shadow: 0 0 10px var(--jf-blue);
     }
 
     /* 5. Main Content Wrapper */
@@ -2274,6 +2295,36 @@ tr:last-child td {
         padding: 11px 12px !important;
         font-size: 12px !important;
         white-space: nowrap;
+    }
+
+    /* Catálogo Interno Mobile Compact View */
+    #view-calculator .table-container table {
+        min-width: 100% !important;
+    }
+
+    #calculator-internal-table-body .col-detail,
+    thead th.col-detail {
+        display: none !important;
+    }
+
+    #calculator-internal-table-body td.col-suggested,
+    thead th.col-suggested {
+        text-align: center;
+        padding: 8px 10px !important;
+    }
+
+    #calculator-internal-table-body td.col-time,
+    thead th.col-time {
+        text-align: center;
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+    }
+
+    .btn-view-prod-action {
+        background: rgba(0, 153, 255, 0.15) !important;
+        color: var(--jf-blue) !important;
+        border: 1px solid rgba(0, 153, 255, 0.4) !important;
+        font-weight: 600 !important;
     }
 
     /* 10. Form Controls: Prevent iOS Safari Auto-Zoom */
@@ -2502,8 +2553,9 @@ tr:last-child td {
     inset: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at 50% 25%, rgba(99, 102, 241, 0.15) 0%, rgba(15, 17, 21, 0.98) 70%);
-    background-color: #0c0e12;
+    background: radial-gradient(circle at 30% 25%, rgba(236, 72, 153, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 70% 75%, rgba(0, 153, 255, 0.18) 0%, transparent 50%),
+                #090b10;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2521,15 +2573,15 @@ tr:last-child td {
 }
 
 .login-card {
-    background: rgba(18, 22, 29, 0.85);
+    background: rgba(16, 20, 29, 0.9);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 36px 32px;
     max-width: 440px;
     width: 100%;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 153, 255, 0.2), 0 0 20px rgba(236, 72, 153, 0.15);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -2544,16 +2596,27 @@ tr:last-child td {
     margin-bottom: 24px;
 }
 
+.login-logo-img {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 16px;
+    box-shadow: 0 0 28px var(--jf-pink-glow), 0 0 40px var(--jf-blue-glow);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    animation: floatIcon 4s ease-in-out infinite;
+}
+
 .login-brand-icon {
     width: 54px;
     height: 54px;
-    background: linear-gradient(135deg, var(--primary), #a855f7);
+    background: var(--brand-gradient);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 8px 24px var(--jf-blue-glow);
     margin-bottom: 16px;
     animation: floatIcon 4s ease-in-out infinite;
 }
@@ -2606,9 +2669,9 @@ tr:last-child td {
 }
 
 .auth-tab-btn.active {
-    background: var(--primary);
+    background: var(--brand-gradient);
     color: white;
-    box-shadow: 0 2px 8px var(--accent-glow);
+    box-shadow: 0 2px 10px rgba(0, 153, 255, 0.35);
 }
 
 .auth-alert {
