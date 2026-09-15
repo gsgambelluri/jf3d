@@ -1877,6 +1877,22 @@ tr:last-child td {
 }
 
 /* Modal form adjustments */
+input[type="date"] {
+    cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.85);
+    opacity: 0.85;
+    transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1);
+    opacity: 1;
+}
+
 .order-product-selection-box {
     max-height: 220px;
     overflow-y: auto;
