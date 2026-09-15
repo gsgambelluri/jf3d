@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JF 3D STUDIO - Sistema Integrado de Gestión</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- --- UNIFIED APPLICATION CONTAINER --- -->
+    <div id="app-container">
+        
+        <!-- --- GLOBAL SYSTEM SIDEBAR (SCREEN ONLY) --- -->
+        <aside class="system-sidebar no-print">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h2>JF 3D Studio</h2>
+                    <span>Gestión de Impresión</span>
+                </div>
+            </div>
+
+            <nav class="system-nav">
+                <button type="button" class="nav-item active" id="btn-nav-dashboard" onclick="switchModule('dashboard')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span>Inicio</span>
+                </button>
+                <button type="button" class="nav-item" id="btn-nav-orders" onclick="switchModule('orders')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
+                    <span>Pedidos</span>
+                </button>
+                <button type="button" class="nav-item" id="btn-nav-catalog" onclick="switchModule('catalog')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                    <span>Catálogo Ventas</span>
+                </button>
+                <button type="button" class="nav-item" id="btn-nav-calculator" onclick="switchModule('calculator')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    <span>Calculadora Costos</span>
+                </button>
+                <button type="button" class="nav-item" id="btn-nav-inventory" onclick="switchModule('inventory')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                    <span>Insumos / Filamentos</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-cloud-footer" style="padding: 12px 14px; border-top: 1px solid var(--border-color); margin-top: auto;">
+                <button type="button" class="btn-cloud-status" id="btn-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión a la base de datos en la nube">
+                    <span class="cloud-status-dot" id="cloud-status-dot"></span>
+                    <span id="cloud-status-text">Modo Local</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- --- WORKSPACE / SYSTEM MODULES PANELS --- -->
+        <main class="system-content">
+            
+            <!-- MODULE 1: DASHBOARD OVERVIEW -->
+            <section class="module-view active" id="view-dashboard">
+                <div class="module-header">
+                    <h2>Panel de Control - JF 3D Studio</h2>
+                    <span class="header-date" id="dashboard-date">Cargando fecha...</span>
+                </div>
+                
+                <!-- KPI cards grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon accent-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.251.11a3.371 3.371 0 003.498 0l.251-.11a3.371 3.371 0 000-6.364l-.251-.11a3.371 3.371 0 00-3.498 0l-.251.11A3.37 3.37 0 009 13.182z" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Ingresos Totales</span>
+                            <h3 class="kpi-value" id="kpi-revenue">$ 0.00</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon accent-indigo">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-8.982m-9 0L18 3.018m-9 9l9 9m-9-9l9-9" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Pedidos Activos</span>
+                            <h3 class="kpi-value" id="kpi-orders-active">0</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon accent-emerald">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Stock de Filamento</span>
+                            <h3 class="kpi-value" id="kpi-filament-stock">0 kg</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon accent-purple">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Productos en Catálogo</span>
+                            <h3 class="kpi-value" id="kpi-products">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-sections-grid">
+                    <!-- Left Section: Active Print Orders Table -->
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <h3>Monitoreo de Pedidos en Cola</h3>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="switchModule('orders')">Ver todos</button>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Detalles del Pedido</th>
+                                        <th>Estado Impresión</th>
+                                        <th>Entrega</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-orders-table">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando pedidos...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Section: Filament Levels and shortcuts -->
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <h3>Nivel de Insumos</h3>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="switchModule('inventory')">Gestionar</button>
+                        </div>
+                        <div class="inventory-status-list" id="dashboard-filament-list">
+                            <div style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando stock de filamento...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- MODULE 2: ORDERS TRACKER -->
+            <section class="module-view" id="view-orders">
+                <div class="module-header">
+                    <h2>Gestión de Pedidos de Clientes</h2>
+                    <button type="button" class="btn btn-primary" onclick="openNewOrderModal()" style="width:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Nuevo Pedido
+                    </button>
+                </div>
+
+                <div class="section-card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Productos Incluidos</th>
+                                    <th>Precio Total</th>
+                                    <th>Estado Impresión</th>
+                                    <th>Estado Pago</th>
+                                    <th>Fecha Entrega</th>
+                                    <th style="text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <tr>
+                                    <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:40px;">No hay pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MODULE 3: SALES CATALOG CREATOR (Existing catalog wrapper) -->
+            <section class="module-view" id="view-catalog">
+                
+                <div id="catalog-module-layout" style="display: flex; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; margin-top: -20px; margin-left: -20px; width: calc(100% + 40px); height: calc(100vh - 40px);">
+                    
+                    <!-- --- SIDEBAR: DESIGN CONTROLS (SCREEN ONLY) --- -->
+                    <aside class="sidebar no-print" id="sidebar-controls" style="display: flex; border-right: 1px solid var(--border-color); box-shadow: none;">
+                        <div class="sidebar-header" style="padding: 16px;">
+                            <div class="app-title">
+                                <h1 style="font-size: 14px;">ESTUDIO DE DISEÑO</h1>
+                                <p style="font-size: 10px;">Configurador de Plantilla A4</p>
+                            </div>
+                        </div>
+
+                        <div class="panels-scroll" style="padding: 12px; gap: 12px;">
+                            <!-- Branding Configuration -->
+                            <section class="panel-card" style="padding: 12px;">
+                                <h3 style="font-size: 11px; margin-bottom: 8px;">Identidad Corporativa</h3>
+                                <div class="form-group">
+                                    <label>Nombre Comercial</label>
+                                    <input type="text" id="brand-name" value="JF 3D">
+                                </div>
+                                <div class="form-group">
+                                    <label>Datos de Contacto</label>
+                                    <input type="text" id="brand-contact" value="WhatsApp: +54 9 11 1234-5678 | Instagram: @jf3d.ok">
+                                </div>
+                                <div class="form-group">
+                                    <label>Logo de la Empresa</label>
+                                    <input type="file" id="logo-upload" accept="image/*">
+                                </div>
+                            </section>
+
+                            <!-- Catalog Content Information -->
+                            <section class="panel-card" style="padding: 12px;">
+                                <h3 style="font-size: 11px; margin-bottom: 8px;">Textos de Portada</h3>
+                                <div class="form-group">
+                                    <label>Título del Catálogo</label>
+                                    <input type="text" id="catalog-title" value="CATÁLOGO DE PRODUCTOS">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subtítulo / Especialidad</label>
+                                    <input type="text" id="catalog-subtitle" value="Impresiones 3D y Diseños Personalizados">
+                                </div>
+                                <div class="form-group">
+                                    <label>Imagen Principal de Portada</label>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <input type="file" id="cover-upload" accept="image/*" style="display: none;">
+                                        <div style="display: flex; gap: 6px;">
+                                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('cover-upload').click()" style="padding: 6px 8px; font-size: 11px; flex: 1;">
+                                                Subir Imagen
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" id="btn-select-cover-pool" style="padding: 6px 8px; font-size: 11px; flex: 1;">
+                                                Usar Extraída
+                                            </button>
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" id="btn-use-logo-cover" style="padding: 6px 8px; font-size: 11px; width: 100%;">
+                                            Usar Logo de la Empresa
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Back Cover Information -->
+                            <section class="panel-card" style="padding: 12px;">
+                                <h3 style="font-size: 11px; margin-bottom: 8px;">Textos de Contraportada</h3>
+                                <div class="form-group">
+                                    <label>Título de Contraportada</label>
+                                    <input type="text" id="back-title" value="¡Gracias por elegirnos!">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subtítulo / Agradecimiento</label>
+                                    <input type="text" id="back-subtitle" value="Hacemos realidad tus ideas en 3D">
+                                </div>
+                            </section>
+
+                            <!-- Layout Options -->
+                            <section class="panel-card" style="padding: 12px;">
+                                <h3 style="font-size: 11px; margin-bottom: 8px;">Temas y Diseño</h3>
+                                <div class="form-group">
+                                    <label>Tema del Catálogo</label>
+                                    <div class="theme-options">
+                                        <button type="button" class="theme-btn active" data-theme="modern">Moderno</button>
+                                        <button type="button" class="theme-btn" data-theme="luxury">Editorial</button>
+                                        <button type="button" class="theme-btn" data-theme="industrial">Bold Grid</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Márgenes de Página</label>
+                                    <div class="theme-options">
+                                        <button type="button" class="theme-btn" data-margin="narrow">Fino</button>
+                                        <button type="button" class="theme-btn active" data-margin="normal">Medio</button>
+                                        <button type="button" class="theme-btn" data-margin="wide">Ancho</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Configuración Cromática (Catálogo)</label>
+                                    <div class="color-pickers">
+                                        <div>
+                                            <div class="color-input-wrapper">
+                                                <input type="color" id="accent-color" value="#4f46e5">
+                                            </div>
+                                            <div class="color-input-label">Destacados</div>
+                                        </div>
+                                        <div>
+                                            <div class="color-input-wrapper">
+                                                <input type="color" id="text-color" value="#1f2937">
+                                            </div>
+                                            <div class="color-input-label">Texto</div>
+                                        </div>
+                                        <div>
+                                            <div class="color-input-wrapper">
+                                                <input type="color" id="bg-color" value="#ffffff">
+                                            </div>
+                                            <div class="color-input-label">Fondo</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Page Options -->
+                            <section class="panel-card" style="padding: 12px;">
+                                <h3 style="font-size: 11px; margin-bottom: 8px;">Páginas &amp; Distribución</h3>
+                                <div class="form-group">
+                                    <label>Productos por Página</label>
+                                    <input type="number" id="prod-per-page" min="1" max="12" value="4">
+                                </div>
+                                
+                                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                    <input type="checkbox" id="show-cover" checked style="width:14px; height:14px; cursor:pointer;">
+                                    <label for="show-cover" style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar Portada Principal</label>
+                                </div>
+                                
+                                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                    <input type="checkbox" id="show-back" checked style="width:14px; height:14px; cursor:pointer;">
+                                    <label for="show-back" style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar Contraportada</label>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div class="sidebar-footer" style="padding: 12px; gap: 8px;">
+                            <button class="btn btn-primary" id="btn-print" style="padding: 8px 12px; font-size: 12px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18" />
+                                </svg>
+                                Imprimir Catálogo
+                            </button>
+                            <button class="btn btn-secondary" id="btn-reset" style="padding: 8px 12px; font-size: 12px;">
+                                Cargar otro Word
+                            </button>
+                        </div>
+                    </aside>
+
+                    <!-- --- MAIN VIEWPORT PANEL (SCREEN ONLY) --- -->
+                    <main class="main-viewport" style="flex: 1; height: 100%;">
+                        
+                        <!-- Top bar (Screen navigation & stats) -->
+                        <header class="top-bar no-print" style="height: 50px; background-color: rgba(15, 17, 21, 0.5);">
+                            <nav class="view-tabs" id="nav-tabs" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+                                <button class="tab-btn active" id="tab-preview">Vista PDF</button>
+                                <button class="tab-btn" id="tab-editor">Editor Grilla</button>
+                                <button class="tab-btn" id="tab-raw">Raw DOCX</button>
+                            </nav>
+
+                            <div class="stats-bar" id="stats-view" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+                                <span><strong id="stat-products">0</strong> productos</span>
+                                <span><strong id="stat-pages">0</strong> páginas</span>
+                            </div>
+                        </header>
+
+                        <!-- 1. LANDING & DOCX UPLOAD PANEL -->
+                        <div class="workspace-panel active" id="panel-setup">
+                            <div class="setup-card" style="padding: 30px; max-width: 500px;">
+                                <div class="setup-icon" style="width:60px; height:60px; margin-bottom:16px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:30px; height:30px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25" />
+                                    </svg>
+                                </div>
+                                <h2 style="font-size:18px; margin-bottom:8px;">Importar Catálogo de Ventas</h2>
+                                <p style="font-size:12px; margin-bottom:20px;">
+                                    Arrastra tu archivo "CATALOGO V1.docx" para rellenar de forma inmediata el catálogo digital de tu sistema.
+                                </p>
+                                
+                                <div class="drop-zone" id="drop-zone" style="padding: 24px 12px; border-width: 2px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:36px; height:36px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3" />
+                                    </svg>
+                                    <span class="drop-zone-text" style="font-size: 12px;">Arrastra aquí tu archivo Word o haz clic para buscar</span>
+                                    <span class="drop-zone-sub" style="font-size: 10px;">Formato admitido: Documento de Word (.docx)</span>
+                                    <input type="file" class="file-input" id="file-input" accept=".docx">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. PRODUCT EDIT PANEL -->
+                        <div class="workspace-panel" id="panel-editor" style="padding: 20px 10px;">
+                            <div class="editor-header-actions" style="margin-bottom:15px;">
+                                <h2 style="font-size:16px;">Catálogo de Productos - Grilla de Contenido</h2>
+                                <button class="btn btn-primary" id="btn-add-product" style="width: auto; padding: 6px 12px; font-size:12px;">
+                                    + Añadir Producto
+                                </button>
+                            </div>
+                            <div class="product-grid" id="product-grid">
+                                <!-- Cards will be injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- 3. Dynamic A4 Print sheets Canvas -->
+                        <div class="workspace-panel" id="panel-preview" style="padding: 20px 0;">
+                            <div class="preview-sheets" id="preview-sheets">
+                                <!-- Dynamic A4 sheet elements will be rendered here -->
+                            </div>
+                        </div>
+
+                        <!-- 4. RAW CONVERSION VIEW (For visual debugging) -->
+                        <div class="workspace-panel" id="panel-raw" style="padding: 20px 10px;">
+                            <div id="raw-content">
+                                <!-- Raw text extracts will be shown here -->
+                            </div>
+                        </div>
+                        
+                    </main>
+                </div>
+            </section>
+            
+            <!-- MODULE 4: COST CALCULATOR -->
+            <section class="module-view" id="view-calculator">
+                <div class="module-header">
+                    <h2>Calculadora de Costos de Impresión 3D</h2>
+                </div>
+                
+                <div class="calculator-layout">
+                    <!-- Left: Parameters Form -->
+                    <div class="section-card">
+                        <h3>Parámetros de Fabricación</h3>
+                        <form id="calc-form" oninput="onCostFormChange(event)" style="margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
+                            <div class="form-group">
+                                <label for="calc-filament">Material / Bobina de Filamento</label>
+                                <select id="calc-filament" onchange="onFilamentDropdownChange()">
+                                    <option value="">Cargando filamentos...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="calc-weight">Peso del Modelo impreso (gramos)</label>
+                                <input type="number" id="calc-weight" min="1" value="50" step="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="calc-hours">Tiempo estimado de Impresión (horas)</label>
+                                <input type="number" id="calc-hours" min="0.1" value="6" step="0.5">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="calc-error-margin">Margen de Error / Pérdida (%)</label>
+                                <input type="number" id="calc-error-margin" min="0" value="10" step="5">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="calc-markup">Margen de Ganancia Deseado (%)</label>
+                                <input type="number" id="calc-markup" min="0" value="150" step="10">
+                            </div>
+
+                            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 6px 0;">
+                            
+                            <div class="form-group">
+                                <label>Costos Fijos del Taller (Opcional)</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div>
+                                        <label style="font-size:10px;">Electricidad ($ por Hora)</label>
+                                        <input type="number" id="calc-electricity" min="0" value="15" step="1">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px;">Amortización ($ por Hora)</label>
+                                        <input type="number" id="calc-depreciation" min="0" value="25" step="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: Pricing results card & catalog push -->
+                    <div class="section-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h3>Desglose de Costos e Importe</h3>
+                            
+                            <div class="calc-results-list" style="margin-top: 20px; display: flex; flex-direction: column; gap: 14px;">
+                                <div class="calc-result-row">
+                                    <span>Costo del Material:</span>
+                                    <strong id="calc-cost-material">$ 0.00</strong>
+                                </div>
+                                <div class="calc-result-row">
+                                    <span>Margen de Error / Pérdida:</span>
+                                    <strong id="calc-cost-error">$ 0.00</strong>
+                                </div>
+                                <div class="calc-result-row">
+                                    <span>Costo Eléctrico:</span>
+                                    <strong id="calc-cost-electricity">$ 0.00</strong>
+                                </div>
+                                <div class="calc-result-row">
+                                    <span>Desgaste / Amortización Máquina:</span>
+                                    <strong id="calc-cost-depreciation">$ 0.00</strong>
+                                </div>
+                                <div class="calc-result-row divider" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 5px;">
+                                    <span style="font-size: 14px; font-weight: 600;">Costo Neto de Fabricación:</span>
+                                    <strong id="calc-cost-net" style="font-size: 16px; color: var(--text-primary);">$ 0.00</strong>
+                                </div>
+                                <div class="calc-result-row highlight" style="background-color: var(--accent-glow); padding: 12px; border-radius: 8px; border: 1px solid var(--border-hover); margin-top: 10px;">
+                                    <span style="font-size: 14px; font-weight: 700; color: white;">Precio de Venta Sugerido:</span>
+                                    <strong id="calc-price-suggested" style="font-size: 20px; color: var(--success); font-weight: 700;">$ 0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Catalog push Form -->
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+                            <h4 style="font-size:12px; margin-bottom:10px; color: var(--text-secondary);">Añadir este Item al Catálogo</h4>
+                            <div class="form-group" style="margin-bottom:10px;">
+                                <label style="font-size:10px;">Nombre del Producto Calculado</label>
+                                <input type="text" id="calc-prod-name" placeholder="Ej. Maceta Robot Mini">
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="pushCalculatedProductToCatalog()">
+                                Guardar en Catálogo Interno
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom: Internal Catalog Cost Sheet Table -->
+                <div class="section-card" style="grid-column: 1 / -1; margin-top: 20px;">
+                    <div class="section-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3>Catálogo Interno - Repositorio de Diseños y Costos</h3>
+                            <span style="font-size: 11px; color: var(--text-secondary);">Mapeo detallado de cotizaciones locales. Se actualiza automáticamente al cambiar costos de insumos, luz, amortización o márgenes.</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="recalculateInternalCatalog({ showToast: true })" style="padding: 6px 12px; font-size: 11px; width: auto;" title="Recalcular todo el catálogo interno con los costos y tarifas actuales">
+                                ⚡ Recalcular Todo
+                            </button>
+                            <button type="button" class="btn btn-primary btn-small" onclick="syncAllInternalPricesToSalesCatalog()" style="padding: 6px 12px; font-size: 11px; width: auto;" title="Sincronizar precios calculados con el Catálogo de Ventas Digital">
+                                🔄 Sincronizar con Ventas
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre del Producto</th>
+                                    <th style="text-align: center;">Peso (g)</th>
+                                    <th style="text-align: center;">Costo Mat.</th>
+                                    <th style="text-align: center;">Tiempo (hs)</th>
+                                    <th style="text-align: center;">Costo Elec.</th>
+                                    <th style="text-align: center;">Desgaste Imp.</th>
+                                    <th style="text-align: center;">Margen Error</th>
+                                    <th style="text-align: center;">Costo Prod.</th>
+                                    <th style="text-align: center;">Margen Ganancia</th>
+                                    <th style="text-align: center;">Valor Sugerido</th>
+                                    <th style="text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calculator-internal-table-body">
+                                <tr>
+                                    <td colspan="11" style="text-align:center;color:var(--text-secondary);padding:30px;">
+                                        No hay productos guardados en tu catálogo interno.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- MODULE 5: FILAMENT INVENTORY -->
+            <section class="module-view" id="view-inventory">
+                <div class="module-header">
+                    <h2>Inventario de Bobinas de Filamento</h2>
+                    <button type="button" class="btn btn-primary" onclick="openAddFilamentModal()" style="width:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Registrar Filamento
+                    </button>
+                </div>
+
+                <div class="filament-inventory-grid" id="inventory-grid">
+                    <!-- Spool stock cards will be generated here -->
+                </div>
+            </section>
+            
+        </main>
+    </div>
+
+    <!-- --- LOADING SCREEN OVERLAY --- -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Cargando documento...</div>
+    </div>
+
+    <!-- --- GLOBAL DIALOG MODALS --- -->
+
+    <!-- 1. NEW ORDER MODAL -->
+    <div class="modal" id="modal-new-order">
+        <div class="modal-content animate-fade" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Pedido</h3>
+                <button class="modal-close" onclick="closeNewOrderModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="form-group">
+                    <label for="order-client">Nombre del Cliente</label>
+                    <input type="text" id="order-client" placeholder="Ej. Juan Pérez">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="order-payment">Estado del Pago</label>
+                        <select id="order-payment">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Seña Pagada">Seña Pagada</option>
+                            <option value="Pagado Completo">Pagado Completo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="order-delivery-date">Fecha Prometida de Entrega</label>
+                        <input type="date" id="order-delivery-date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Seleccionar Productos del Catálogo</label>
+                    <div class="order-product-selection-box" id="order-product-list">
+                        <!-- Populated dynamically from catalog -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNewOrderModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveNewOrder()" style="width: auto; padding: 8px 16px;">Registrar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ADD FILAMENT SPOOL MODAL -->
+    <div class="modal" id="modal-add-filament">
+        <div class="modal-content animate-fade" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Registrar Bobina de Filamento</h3>
+                <button class="modal-close" onclick="closeAddFilamentModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="fil-brand">Marca</label>
+                        <input type="text" id="fil-brand" placeholder="Ej. Grilon3, Printalot">
+                    </div>
+                    <div class="form-group">
+                        <label for="fil-material">Material</label>
+                        <select id="fil-material">
+                            <option value="PLA">PLA</option>
+                            <option value="PLA+">PLA+</option>
+                            <option value="PETG">PETG</option>
+                            <option value="Flex (TPU)">Flex (TPU)</option>
+                            <option value="ABS">ABS</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fil-color">Color</label>
+                    <input type="text" id="fil-color" placeholder="Ej. Rojo Semáforo, Negro Mate">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="fil-cost">Costo de Bobina ($ ARS)</label>
+                        <input type="number" id="fil-cost" min="1" value="12000" step="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="fil-weight">Peso Neto (gramos)</label>
+                        <input type="number" id="fil-weight" min="1" value="1000" step="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddFilamentModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveNewFilamentSpool()" style="width: auto; padding: 8px 16px;">Registrar Bobina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. IMAGE POOL SELECTION MODAL -->
+    <div class="modal" id="modal-image-select">
+        <div class="modal-content animate-fade">
+            <div class="modal-header">
+                <h3>Imágenes Extraídas del Documento</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+                    Selecciona una de las imágenes extraídas para el producto actual, o sube un archivo nuevo.
+                </p>
+                <div class="image-pool-grid" id="image-pool-grid">
+                    <!-- Pool images will be generated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-image-select').classList.remove('active')" style="width: auto; padding: 6px 12px;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. EDIT INTERNAL PRODUCT MODAL -->
+    <div class="modal" id="modal-edit-internal-product">
+        <div class="modal-content animate-fade" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>Editar Producto del Catálogo Interno</h3>
+                <button class="modal-close" onclick="closeEditInternalProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-prod-id">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="edit-prod-title">Nombre del Producto</label>
+                    <input type="text" id="edit-prod-title" placeholder="Ej. Maceta Robot Mini">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label for="edit-prod-weight">Peso del Modelo (gramos)</label>
+                        <input type="number" id="edit-prod-weight" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-prod-hours">Tiempo de Impresión (horas)</label>
+                        <input type="number" id="edit-prod-hours" min="0.1" step="0.5">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="edit-prod-spool">Bobina Específica (Opcional)</label>
+                    <select id="edit-prod-spool">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="edit-prod-markup">Margen de Ganancia (%)</label>
+                    <input type="number" id="edit-prod-markup" min="0" step="10">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditInternalProductModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveEditedInternalProduct()" style="width: auto; padding: 8px 16px;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. SUPABASE CLOUD DATABASE CONFIGURATION MODAL -->
+    <div class="modal" id="modal-supabase-config">
+        <div class="modal-content animate-fade" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#3ecf8e;" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.416 13.916a.396.396 0 0 0 .313.64h9.362v8.958a.396.396 0 0 0 .716.233l10.868-13.753a.396.396 0 0 0-.313-.64z"/>
+                    </svg>
+                    <h3>Base de Datos en la Nube (Supabase)</h3>
+                </div>
+                <button class="modal-close" onclick="closeSupabaseModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+                    Conecta tu sistema a <strong>Supabase</strong> para sincronizar pedidos, bobinas y costos en tiempo real en la nube.
+                </p>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="supabase-url">Project URL</label>
+                    <input type="text" id="supabase-url" placeholder="https://xyzcompany.supabase.co">
+                    <small style="font-size: 10px; color: var(--text-muted);">Encuéntralo en Supabase: Project Settings &gt; API</small>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="supabase-anon-key">Anon Public Key</label>
+                    <input type="password" id="supabase-anon-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                    <small style="font-size: 10px; color: var(--text-muted);">Clave pública (anon/public) en Project Settings &gt; API</small>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 10px; font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">
+                    <strong>ℹ️ ¿Aún no creaste las tablas?</strong> Ejecuta el archivo <code style="color:var(--success);">supabase_schema.sql</code> que dejamos en tu proyecto en el <em>SQL Editor</em> de Supabase.
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content: space-between;">
+                <button class="btn btn-secondary" onclick="disconnectSupabase()" id="btn-disconnect-supabase" style="width: auto; padding: 8px 14px; color: var(--danger); border-color: rgba(239, 68, 68, 0.2); display: none;">
+                    Desconectar
+                </button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn btn-secondary" onclick="closeSupabaseModal()" style="width: auto; padding: 8px 14px;">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveSupabaseConfig()" style="width: auto; padding: 8px 16px;">Conectar y Sincronizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script>
+        // Smooth reveal controls for catalog creator specifically
+        const fileObserver = new MutationObserver(() => {
+            if (appState.products.length > 0) {
+                const navTabs = document.getElementById('nav-tabs');
+                const statsView = document.getElementById('stats-view');
+                if (navTabs) { navTabs.style.opacity = '1'; navTabs.style.pointerEvents = 'auto'; }
+                if (statsView) { statsView.style.opacity = '1'; statsView.style.pointerEvents = 'auto'; }
+                fileObserver.disconnect();
+            }
+        });
+        
+        const previewSheets = document.getElementById('preview-sheets');
+        if (previewSheets) {
+            fileObserver.observe(previewSheets, { childList: true });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Node / npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / local configs
+.env
+.env.local
+.env.*.local
