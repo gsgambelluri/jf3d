@@ -1878,30 +1878,42 @@ tr:last-child td {
 
 /* Modal form adjustments */
 .order-product-selection-box {
-    max-height: 200px;
+    max-height: 220px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 10px;
-    background-color: rgba(10, 12, 16, 0.6);
+    padding: 8px;
+    background-color: rgba(10, 12, 16, 0.7);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .order-product-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 12px;
+    gap: 12px;
+    font-size: 13px;
     color: var(--text-primary);
     cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: all 0.2s ease;
+}
+
+.order-product-item:hover {
+    background: rgba(0, 153, 255, 0.08);
+    border-color: rgba(0, 153, 255, 0.3);
 }
 
 .order-product-item input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    accent-color: var(--jf-blue);
+    flex-shrink: 0;
 }
 
 /* Toast Notification */

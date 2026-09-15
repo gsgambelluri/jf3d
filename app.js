@@ -2667,15 +2667,32 @@ window.openNewOrderModal = function() {
     const productListBox = document.getElementById('order-product-list');
     if (productListBox) {
         productListBox.innerHTML = '';
-        if (!appState.products || appState.products.length === 0) {
-            productListBox.innerHTML = '<span style="color:var(--text-secondary); font-size:11px;">Carga productos en tu catálogo primero para seleccionarlos aquí.</span>';
+        const internalList = appState.internalProducts || [];
+        if (internalList.length === 0) {
+            productListBox.innerHTML = `
+                <div style="color:var(--text-secondary); font-size:12px; padding:16px; text-align:center; line-height:1.5;">
+                    ⚠️ No tienes productos guardados en tu <strong>Catálogo Interno</strong>.<br>
+                    Calcula y guarda productos en la sección <strong>Calculadora</strong> para seleccionarlos aquí.
+                </div>
+            `;
         } else {
-            appState.products.forEach(prod => {
+            internalList.forEach(prod => {
                 const item = document.createElement('label');
                 item.className = 'order-product-item';
+                const price = Number(prod.suggestedPrice || 0);
+                const weight = Number(prod.weightGrams || 0);
+                const hours = Number(prod.hours || 0);
                 item.innerHTML = `
-                    <input type="checkbox" class="order-prod-checkbox" value="${prod.title}" data-price="${prod.price}">
-                    <span>${prod.title} (${prod.price})</span>
+                    <input type="checkbox" class="order-prod-checkbox" value="${prod.title}" data-price="${price}" data-weight="${weight}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px;">
+                        <div>
+                            <strong style="color:var(--text-primary); font-size:13px;">${prod.title}</strong>
+                            <div style="color:var(--text-secondary); font-size:11px;">⚖️ ${weight.toFixed(0)}g • ⏱️ ${hours.toFixed(1)}h</div>
+                        </div>
+                        <div style="color:var(--success); font-weight:700; font-size:13px; white-space:nowrap;">
+                            $ ${price.toFixed(2)}
+                        </div>
+                    </div>
                 `;
                 productListBox.appendChild(item);
             });
@@ -2708,8 +2725,8 @@ window.saveNewOrder = function() {
     
     checkboxes.forEach(cb => {
         products.push(cb.value);
-        const priceStr = cb.dataset.price;
-        totalPrice += parsePriceStringToFloat(priceStr);
+        const priceNum = parseFloat(cb.dataset.price) || 0;
+        totalPrice += priceNum;
     });
     
     const payment = document.getElementById('order-payment').value;
@@ -2891,16 +2908,21 @@ function deductFilamentForOrder(order) {
     
     let totalGramsToDeduct = 0;
     order.products.forEach(prodTitle => {
-        const prod = appState.products.find(p => p.title === prodTitle);
-        if (prod) {
-            const match = prod.description.match(/(\d+(?:\.\d+)?)\s*g(?:grams|ramos)?/i);
-            if (match) {
-                totalGramsToDeduct += parseFloat(match[1]);
-            } else {
-                totalGramsToDeduct += 50; // default estimated grams
-            }
+        const internalProd = (appState.internalProducts || []).find(p => p.title === prodTitle);
+        if (internalProd && internalProd.weightGrams) {
+            totalGramsToDeduct += parseFloat(internalProd.weightGrams) || 0;
         } else {
-            totalGramsToDeduct += 50;
+            const prod = (appState.products || []).find(p => p.title === prodTitle);
+            if (prod) {
+                const match = prod.description ? prod.description.match(/(\d+(?:\.\d+)?)\s*g(?:grams|ramos)?/i) : null;
+                if (match) {
+                    totalGramsToDeduct += parseFloat(match[1]);
+                } else {
+                    totalGramsToDeduct += 50;
+                }
+            } else {
+                totalGramsToDeduct += 50;
+            }
         }
     });
     
