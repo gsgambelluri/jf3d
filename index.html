@@ -759,7 +759,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Seleccionar Productos del Catálogo Interno</label>
+                    <label for="order-product-search">Seleccionar Productos del Catálogo Interno</label>
+                    <div style="position: relative; margin-bottom: 8px;">
+                        <input type="text" id="order-product-search" placeholder="🔍 Buscar producto en el catálogo..." oninput="filterOrderProducts(this.value)" style="padding: 9px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
                     <div class="order-product-selection-box" id="order-product-list">
                         <!-- Populated dynamically from internal catalog -->
                     </div>

@@ -2664,6 +2664,9 @@ window.openNewOrderModal = function() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('order-delivery-date').value = today;
     
+    const searchInput = document.getElementById('order-product-search');
+    if (searchInput) searchInput.value = '';
+    
     const productListBox = document.getElementById('order-product-list');
     if (productListBox) {
         productListBox.innerHTML = '';
@@ -2679,6 +2682,7 @@ window.openNewOrderModal = function() {
             internalList.forEach(prod => {
                 const item = document.createElement('label');
                 item.className = 'order-product-item';
+                item.dataset.title = prod.title || '';
                 const price = Number(prod.suggestedPrice || 0);
                 const weight = Number(prod.weightGrams || 0);
                 const hours = Number(prod.hours || 0);
@@ -2700,6 +2704,36 @@ window.openNewOrderModal = function() {
     }
     
     modal.classList.add('active');
+};
+
+window.filterOrderProducts = function(query) {
+    const q = (query || '').toLowerCase().trim();
+    const items = document.querySelectorAll('#order-product-list .order-product-item');
+    let visibleCount = 0;
+    items.forEach(item => {
+        const title = (item.dataset.title || '').toLowerCase();
+        if (!q || title.includes(q)) {
+            item.style.display = 'flex';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    let noResultsEl = document.getElementById('order-product-no-results');
+    if (visibleCount === 0 && items.length > 0) {
+        if (!noResultsEl) {
+            noResultsEl = document.createElement('div');
+            noResultsEl.id = 'order-product-no-results';
+            noResultsEl.style.cssText = 'color:var(--text-secondary); font-size:12px; padding:16px; text-align:center;';
+            noResultsEl.textContent = 'No se encontraron productos con ese nombre.';
+            const list = document.getElementById('order-product-list');
+            if (list) list.appendChild(noResultsEl);
+        }
+        noResultsEl.style.display = 'block';
+    } else if (noResultsEl) {
+        noResultsEl.style.display = 'none';
+    }
 };
 
 window.closeNewOrderModal = function() {
