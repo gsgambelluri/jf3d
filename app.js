@@ -158,11 +158,13 @@ window.initSupabase = async function() {
 };
 
 function updateCloudStatusBadge(isConnected, text) {
-    const dot = document.querySelector('.cloud-status-dot') || document.getElementById('cloud-status-dot');
-    const label = document.getElementById('cloud-status-text') || document.getElementById('cloud-status-label');
-    if (dot) {
+    document.querySelectorAll('.cloud-status-dot').forEach(dot => {
         dot.className = 'cloud-status-dot ' + (isConnected ? 'connected' : 'offline');
-    }
+    });
+    document.querySelectorAll('.cloud-status-text').forEach(label => {
+        label.textContent = text;
+    });
+    const label = document.getElementById('cloud-status-text') || document.getElementById('cloud-status-label');
     if (label) label.textContent = text;
 }
 
@@ -1585,19 +1587,31 @@ function syncSidebarInputsFromState() {
 
 // --- GLOBAL MULTI-MODULE NAVIGATOR (SPA ROUTING) ---
 window.switchModule = function(moduleName) {
+    // Update desktop sidebar buttons
     document.querySelectorAll('.system-sidebar .nav-item').forEach(btn => {
         btn.classList.remove('active');
     });
-    
     const activeBtn = document.getElementById(`btn-nav-${moduleName}`);
     if (activeBtn) activeBtn.classList.add('active');
+
+    // Update mobile bottom nav buttons
+    document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeMobileBtn = document.getElementById(`btn-mob-nav-${moduleName}`);
+    if (activeMobileBtn) activeMobileBtn.classList.add('active');
     
+    // Switch active view
     document.querySelectorAll('.module-view').forEach(view => {
         view.classList.remove('active');
     });
-    
     const activeView = document.getElementById(`view-${moduleName}`);
     if (activeView) activeView.classList.add('active');
+
+    // Smooth scroll to top on mobile and desktop
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const content = document.querySelector('.system-content');
+    if (content) content.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Initialize module data or updates
     if (moduleName === 'catalog') {
@@ -1613,6 +1627,28 @@ window.switchModule = function(moduleName) {
         renderInternalProductTable();
     } else if (moduleName === 'inventory') {
         renderInventoryGrid();
+    }
+};
+
+window.switchCatalogMobileTab = function(tabName) {
+    const viewCatalog = document.getElementById('view-catalog');
+    const btnEditor = document.getElementById('btn-cat-mob-editor');
+    const btnPreview = document.getElementById('btn-cat-mob-preview');
+    if (!viewCatalog) return;
+
+    if (tabName === 'editor') {
+        viewCatalog.classList.remove('mobile-tab-preview');
+        viewCatalog.classList.add('mobile-tab-editor');
+        if (btnEditor) btnEditor.classList.add('active');
+        if (btnPreview) btnPreview.classList.remove('active');
+    } else {
+        viewCatalog.classList.remove('mobile-tab-editor');
+        viewCatalog.classList.add('mobile-tab-preview');
+        if (btnPreview) btnPreview.classList.add('active');
+        if (btnEditor) btnEditor.classList.remove('active');
+        if (typeof switchTab === 'function') {
+            switchTab('preview');
+        }
     }
 };
 

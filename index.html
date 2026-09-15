@@ -11,6 +11,24 @@
     <!-- --- UNIFIED APPLICATION CONTAINER --- -->
     <div id="app-container">
         
+        <!-- --- MOBILE TOP HEADER (MOBILE ONLY) --- -->
+        <header class="mobile-topbar no-print">
+            <div class="mobile-brand">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                    </svg>
+                </div>
+                <div class="mobile-brand-title">
+                    <span class="mobile-app-name">JF 3D Studio</span>
+                </div>
+            </div>
+            <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión en la nube">
+                <span class="cloud-status-dot"></span>
+                <span class="cloud-status-text">Modo Local</span>
+            </button>
+        </header>
+
         <!-- --- GLOBAL SYSTEM SIDEBAR (SCREEN ONLY) --- -->
         <aside class="system-sidebar no-print">
             <div class="sidebar-brand">
@@ -201,12 +219,22 @@
             </section>
 
             <!-- MODULE 3: SALES CATALOG CREATOR (Existing catalog wrapper) -->
-            <section class="module-view" id="view-catalog">
+            <section class="module-view mobile-tab-editor" id="view-catalog">
                 
-                <div id="catalog-module-layout" style="display: flex; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; margin-top: -20px; margin-left: -20px; width: calc(100% + 40px); height: calc(100vh - 40px);">
+                <!-- Mobile sub-tabs for catalog -->
+                <div class="catalog-mobile-tabs no-print">
+                    <button type="button" class="catalog-mob-tab active" id="btn-cat-mob-editor" onclick="switchCatalogMobileTab('editor')">
+                        🛠️ Diseñador &amp; Productos
+                    </button>
+                    <button type="button" class="catalog-mob-tab" id="btn-cat-mob-preview" onclick="switchCatalogMobileTab('preview')">
+                        📄 Hoja A4 &amp; Imprimir
+                    </button>
+                </div>
+                
+                <div id="catalog-module-layout">
                     
                     <!-- --- SIDEBAR: DESIGN CONTROLS (SCREEN ONLY) --- -->
-                    <aside class="sidebar no-print" id="sidebar-controls" style="display: flex; border-right: 1px solid var(--border-color); box-shadow: none;">
+                    <aside class="sidebar no-print" id="sidebar-controls">
                         <div class="sidebar-header" style="padding: 16px;">
                             <div class="app-title">
                                 <h1 style="font-size: 14px;">ESTUDIO DE DISEÑO</h1>
@@ -592,6 +620,40 @@
             </section>
             
         </main>
+
+        <!-- --- MOBILE BOTTOM DOCK / NAVIGATION BAR --- -->
+        <nav class="mobile-bottom-nav no-print">
+            <button type="button" class="mobile-nav-item active" id="btn-mob-nav-dashboard" onclick="switchModule('dashboard')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>Inicio</span>
+            </button>
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-orders" onclick="switchModule('orders')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span>Pedidos</span>
+            </button>
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-catalog" onclick="switchModule('catalog')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span>Catálogo</span>
+            </button>
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-calculator" onclick="switchModule('calculator')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span>Costos</span>
+            </button>
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-inventory" onclick="switchModule('inventory')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+                <span>Insumos</span>
+            </button>
+        </nav>
     </div>
 
     <!-- --- LOADING SCREEN OVERLAY --- -->
