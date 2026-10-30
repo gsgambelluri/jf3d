@@ -1939,6 +1939,20 @@ window.switchModule = function(moduleName) {
     });
     const activeMobileBtn = document.getElementById(`btn-mob-nav-${moduleName}`);
     if (activeMobileBtn) activeMobileBtn.classList.add('active');
+
+    // Update mobile header current section badge
+    const mobileSectionBadge = document.getElementById('mobile-current-section');
+    if (mobileSectionBadge) {
+        const sectionLabels = {
+            'dashboard': '📊 Inicio',
+            'orders': '📦 Pedidos',
+            'design-requests': '🎨 Diseños y Costos',
+            'catalog': '📖 Catálogo',
+            'calculator': '🧮 Calculadora',
+            'inventory': '🧵 Insumos'
+        };
+        mobileSectionBadge.textContent = sectionLabels[moduleName] || moduleName;
+    }
     
     // Switch active view
     document.querySelectorAll('.module-view').forEach(view => {

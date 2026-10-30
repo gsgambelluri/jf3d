@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JF 3D STUDIO - Sistema Integrado de Gestión</title>
     <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <link rel="stylesheet" href="styles.css?v=2.0">
+    <link rel="stylesheet" href="styles.css?v=2.1">
 </head>
 <body>
 
@@ -78,6 +78,7 @@
                 <img src="logo.jpg" alt="JF 3D" class="header-logo-img">
                 <div class="mobile-brand-title">
                     <span class="mobile-app-name">JF 3D Studio</span>
+                    <span class="mobile-current-badge" id="mobile-current-section">📊 Inicio</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -228,6 +229,9 @@
                             <h3>Monitoreo de Pedidos en Cola</h3>
                             <button type="button" class="btn btn-secondary btn-small" onclick="switchModule('orders')">Ver todos</button>
                         </div>
+                        <div class="mobile-table-hint">
+                            <span>↔️ Desliza la tabla para ver todos los pedidos</span>
+                        </div>
                         <div class="table-container">
                             <table>
                                 <thead>
@@ -275,6 +279,9 @@
                 </div>
 
                 <div class="section-card">
+                    <div class="mobile-table-hint">
+                        <span>↔️ Desliza la tabla horizontalmente para ver todos los datos y acciones</span>
+                    </div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -374,6 +381,10 @@
                                 ✅ Realizadas (<span id="count-dreq-done">0</span>)
                             </button>
                         </div>
+                    </div>
+
+                    <div class="mobile-table-hint">
+                        <span>↔️ Desliza la tabla horizontalmente para ver todos los datos y acciones</span>
                     </div>
 
                     <div class="table-container">
@@ -854,7 +865,7 @@
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
                 <!-- Cliente y Estado de Pago -->
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col ratio-2-1" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="order-client">Nombre del Cliente *</label>
                         <input type="text" id="order-client" placeholder="Ej. Juan Pérez">
@@ -870,7 +881,7 @@
                 </div>
 
                 <!-- Fechas: Fecha del Pedido y Fecha Prometida de Entrega -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="order-date">📅 Fecha del Pedido *</label>
                         <input type="date" id="order-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
@@ -908,7 +919,7 @@
                             🔄 Igualar al Sugerido
                         </button>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                    <div class="order-financial-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 11px; color: var(--text-secondary);">Cantidad</label>
                             <input type="number" id="order-total-quantity" value="1" min="1" step="1" oninput="onOrderFinancialChange('qty')" style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center;">
@@ -921,7 +932,7 @@
                             <label style="font-size: 11px; color: var(--text-secondary);">Valor Total Sugerido</label>
                             <input type="text" id="order-suggested-total-price" value="$ 0.00" readonly style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.5); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: not-allowed; text-align: right;">
                         </div>
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group col-span-2-mobile" style="margin: 0;">
                             <label style="font-size: 11px; color: var(--success); font-weight: 700;">Valor a Cobrar ($ ARS) *</label>
                             <input type="number" id="order-final-price" value="0.00" min="0" step="0.01" oninput="this.dataset.userModified='true'" style="font-weight: 700; font-size: 15px; padding: 8px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.15); text-align: right;">
                         </div>
@@ -945,7 +956,7 @@
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
                 <input type="hidden" id="dreq-edit-id" value="">
 
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col ratio-2-1" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="dreq-name">Nombre del Producto / Modelo 3D *</label>
                         <input type="text" id="dreq-name" placeholder="Ej. Soporte para Auriculares, Engranaje batidora" required>
@@ -956,7 +967,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="dreq-date">📅 Fecha de Solicitud</label>
                         <input type="date" id="dreq-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
@@ -998,7 +1009,7 @@
                 <button class="modal-close" onclick="closeAddFilamentModal()">&times;</button>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="fil-brand">Marca</label>
                         <input type="text" id="fil-brand" placeholder="Ej. Grilon3, Printalot">
@@ -1020,7 +1031,7 @@
                     <input type="text" id="fil-color" placeholder="Ej. Rojo Semáforo, Negro Mate">
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="fil-cost">Costo de Bobina ($ ARS)</label>
                         <input type="number" id="fil-cost" min="1" value="12000" step="500">
@@ -1074,7 +1085,7 @@
                     <label for="edit-prod-title">Nombre del Producto</label>
                     <input type="text" id="edit-prod-title" placeholder="Ej. Maceta Robot Mini">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
                         <label for="edit-prod-weight">Peso del Modelo (gramos)</label>
                         <input type="number" id="edit-prod-weight" min="1" step="1">
@@ -1173,7 +1184,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=2.0"></script>
+    <script src="app.js?v=2.1"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {
