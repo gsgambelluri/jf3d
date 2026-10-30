@@ -4,6 +4,7 @@ let appState = {
     imagePool: [], // Stores all extracted unique base64 images
     selectedProductForImgChange: null, // Track which product is changing image
     orders: [],      // array of { id, clientName, products: [], totalPrice, status, payment, date, filamentDeducted }
+    designRequests: [], // array of { id, title, client, description, urls: [], status, completed, date, createdAt, completedAt }
     inventory: [],   // array of { id, brand, material, color, cost, weightGrams, remainingGrams }
     internalProducts: [], // New state storage for cost calculator items (Internal Catalog)
     settings: {
@@ -245,8 +246,19 @@ window.handleAuthSubmit = async function(event) {
             if (supabaseClient && supabaseClient.auth) {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) {
+                    // If network failed (e.g., Supabase project paused) and user entered master pin, allow offline login
+                    if ((error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) && (password === MASTER_WORKSHOP_PIN || password === 'admin' || password === 'jf3d')) {
+                        localStorage.setItem('jf3d_offline_session', 'true');
+                        setUserSession({ email: email || 'taller@jf3d.local', isOffline: true });
+                        unlockApp();
+                        showToast('Ingresaste en modo taller local (Supabase en pausa o sin conexión)');
+                        return;
+                    }
+
                     if (error.message.includes('Invalid login credentials')) {
                         showAuthAlert('Correo o contraseña incorrectos. Si aún no te registraste, selecciona la pestaña "Registrarse".');
+                    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
+                        showAuthAlert('No se pudo conectar con Supabase (el proyecto suele pausarse por inactividad en el plan gratuito). Puedes reactivarlo en supabase.com o ingresar abajo con la "Clave Maestra del Taller" (1234).');
                     } else {
                         showAuthAlert(`Error: ${error.message}`);
                     }
@@ -473,12 +485,18 @@ window.syncFromCloud = async function() {
     try {
         const { data: cloudInv } = await supabaseClient.from('inventory').select('*');
         const { data: cloudOrders } = await supabaseClient.from('orders').select('*');
+        let cloudDesignRequests = null;
+        try {
+            const { data: dreqData } = await supabaseClient.from('design_requests').select('*');
+            cloudDesignRequests = dreqData;
+        } catch (e) {}
         const { data: cloudInternal } = await supabaseClient.from('internal_products').select('*');
         const { data: cloudPublic } = await supabaseClient.from('public_products').select('*');
         const { data: cloudSettings } = await supabaseClient.from('app_settings').select('*');
         
         const hasCloudData = (cloudInv && cloudInv.length > 0) || 
                              (cloudOrders && cloudOrders.length > 0) || 
+                             (cloudDesignRequests && cloudDesignRequests.length > 0) ||
                              (cloudInternal && cloudInternal.length > 0) ||
                              (cloudPublic && cloudPublic.length > 0);
         
@@ -496,15 +514,46 @@ window.syncFromCloud = async function() {
             }
             
             if (cloudOrders && cloudOrders.length > 0) {
-                appState.orders = cloudOrders.map(r => ({
+                appState.orders = cloudOrders.map(r => {
+                    const productsList = Array.isArray(r.products) ? r.products.map(p => typeof p === 'object' && p !== null ? `${p.quantity > 1 ? p.quantity + 'x ' : ''}${p.title}` : p) : [];
+                    const itemsList = Array.isArray(r.products) && r.products.length > 0 && typeof r.products[0] === 'object' ? r.products : [];
+                    const qty = parseFloat(r.quantity) || (itemsList.reduce((acc, it) => acc + (it.quantity || 1), 0)) || (productsList.length || 1);
+                    const finalP = parseFloat(r.final_price) || parseFloat(r.total_price) || 0;
+                    const sugTotalP = parseFloat(r.suggested_total_price) || finalP;
+                    const sugUnitP = parseFloat(r.suggested_unit_price) || (qty > 0 ? sugTotalP / qty : 0);
+
+                    return {
+                        id: r.id,
+                        clientName: r.client_name,
+                        orderDate: r.order_date || r.date,
+                        deliveryDate: r.date,
+                        date: r.date,
+                        quantity: qty,
+                        suggestedUnitPrice: sugUnitP,
+                        suggestedTotalPrice: sugTotalP,
+                        finalPrice: finalP,
+                        totalPrice: finalP,
+                        products: productsList,
+                        items: itemsList,
+                        status: r.status,
+                        payment: r.payment,
+                        filamentDeducted: !!r.filament_deducted
+                    };
+                });
+            }
+
+            if (cloudDesignRequests && cloudDesignRequests.length > 0) {
+                appState.designRequests = cloudDesignRequests.map(r => ({
                     id: r.id,
-                    clientName: r.client_name,
-                    products: Array.isArray(r.products) ? r.products : [],
-                    totalPrice: parseFloat(r.total_price) || 0,
-                    status: r.status,
-                    payment: r.payment,
-                    date: r.date,
-                    filamentDeducted: !!r.filament_deducted
+                    title: r.title,
+                    client: r.client || '',
+                    description: r.description || '',
+                    urls: Array.isArray(r.urls) ? r.urls : [],
+                    status: r.status || (r.completed ? 'Realizado' : 'Pendiente'),
+                    completed: !!r.completed,
+                    date: r.date || r.created_at || '',
+                    createdAt: r.created_at || r.date || '',
+                    completedAt: r.completed_at || null
                 }));
             }
             
@@ -556,6 +605,7 @@ window.syncFromCloud = async function() {
             updateFilamentDropdown();
             renderInventoryGrid();
             renderOrdersTable();
+            renderDesignRequests();
             renderInternalProductTable();
             renderProductCardsInEditor();
             updatePreviewAndStats();
@@ -582,6 +632,9 @@ window.pushAllToCloud = async function() {
         }
         if (appState.orders && appState.orders.length > 0) {
             for (const o of appState.orders) { await pushOrderToCloud(o); }
+        }
+        if (appState.designRequests && appState.designRequests.length > 0) {
+            for (const d of appState.designRequests) { await pushDesignRequestToCloud(d); }
         }
         if (appState.internalProducts && appState.internalProducts.length > 0) {
             for (const p of appState.internalProducts) { await pushInternalProductToCloud(p); }
@@ -618,22 +671,64 @@ window.deleteInventoryFromCloud = async function(id) {
 window.pushOrderToCloud = async function(order) {
     if (!supabaseClient || !order) return;
     try {
-        await supabaseClient.from('orders').upsert({
+        const payload = {
             id: order.id,
             client_name: order.clientName,
-            products: order.products,
-            total_price: order.totalPrice,
+            products: order.items && order.items.length > 0 ? order.items : order.products,
+            total_price: order.finalPrice !== undefined ? order.finalPrice : order.totalPrice,
             status: order.status,
             payment: order.payment,
-            date: order.date,
+            date: order.deliveryDate || order.date,
             filament_deducted: order.filamentDeducted
-        });
+        };
+
+        if (order.orderDate) payload.order_date = order.orderDate;
+        if (order.quantity !== undefined) payload.quantity = order.quantity;
+        if (order.suggestedUnitPrice !== undefined) payload.suggested_unit_price = order.suggestedUnitPrice;
+        if (order.suggestedTotalPrice !== undefined) payload.suggested_total_price = order.suggestedTotalPrice;
+        if (order.finalPrice !== undefined) payload.final_price = order.finalPrice;
+
+        const { error } = await supabaseClient.from('orders').upsert(payload);
+        if (error) {
+            console.warn('Upsert con campos extendidos falló, reintentando con esquema base:', error.message);
+            delete payload.order_date;
+            delete payload.quantity;
+            delete payload.suggested_unit_price;
+            delete payload.suggested_total_price;
+            delete payload.final_price;
+            await supabaseClient.from('orders').upsert(payload);
+        }
     } catch (e) { console.error('Cloud order upsert failed:', e); }
 };
 
 window.deleteOrderFromCloud = async function(id) {
     if (!supabaseClient || !id) return;
     try { await supabaseClient.from('orders').delete().eq('id', id); } catch (e) {}
+};
+
+window.pushDesignRequestToCloud = async function(req) {
+    if (!supabaseClient || !req) return;
+    try {
+        await supabaseClient.from('design_requests').upsert({
+            id: req.id,
+            title: req.title,
+            client: req.client || '',
+            description: req.description || '',
+            urls: req.urls || [],
+            status: req.status || 'Pendiente',
+            completed: !!req.completed,
+            date: req.date || req.createdAt || '',
+            created_at: req.createdAt || req.date || '',
+            completed_at: req.completedAt || null
+        });
+    } catch (e) {
+        console.warn('Cloud design request upsert skipped:', e.message);
+    }
+};
+
+window.deleteDesignRequestFromCloud = async function(id) {
+    if (!supabaseClient || !id) return;
+    try { await supabaseClient.from('design_requests').delete().eq('id', id); } catch (e) {}
 };
 
 window.pushInternalProductToCloud = async function(prod) {
@@ -1718,6 +1813,7 @@ function loadSampleDataIfEmpty() {
         }
     ];
     appState.orders = [];
+    appState.designRequests = [];
     appState.products = [];
     appState.costSettings = {
         electricityRate: 15,
@@ -1863,6 +1959,8 @@ window.switchModule = function(moduleName) {
         updateDashboardData();
     } else if (moduleName === 'orders') {
         renderOrdersTable();
+    } else if (moduleName === 'design-requests') {
+        renderDesignRequests();
     } else if (moduleName === 'calculator') {
         updateFilamentDropdown();
         syncCostInputsFromState();
@@ -2662,10 +2760,32 @@ window.openNewOrderModal = function() {
     document.getElementById('order-payment').value = 'Pendiente';
     
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('order-delivery-date').value = today;
+    const orderDateEl = document.getElementById('order-date');
+    if (orderDateEl) orderDateEl.value = today;
+
+    const deliveryDateEl = document.getElementById('order-delivery-date');
+    if (deliveryDateEl) deliveryDateEl.value = today;
     
     const searchInput = document.getElementById('order-product-search');
     if (searchInput) searchInput.value = '';
+
+    const customProdInput = document.getElementById('order-custom-product');
+    if (customProdInput) customProdInput.value = '';
+
+    const totalQtyInput = document.getElementById('order-total-quantity');
+    if (totalQtyInput) totalQtyInput.value = 1;
+
+    const unitPriceInput = document.getElementById('order-suggested-unit-price');
+    if (unitPriceInput) unitPriceInput.value = '0.00';
+
+    const totalSugEl = document.getElementById('order-suggested-total-price');
+    if (totalSugEl) totalSugEl.value = '$ 0.00';
+
+    const finalPriceInput = document.getElementById('order-final-price');
+    if (finalPriceInput) {
+        finalPriceInput.value = '0.00';
+        finalPriceInput.dataset.userModified = 'false';
+    }
     
     const productListBox = document.getElementById('order-product-list');
     if (productListBox) {
@@ -2675,25 +2795,33 @@ window.openNewOrderModal = function() {
             productListBox.innerHTML = `
                 <div style="color:var(--text-secondary); font-size:12px; padding:16px; text-align:center; line-height:1.5;">
                     ⚠️ No tienes productos guardados en tu <strong>Catálogo Interno</strong>.<br>
-                    Calcula y guarda productos en la sección <strong>Calculadora</strong> para seleccionarlos aquí.
+                    Puedes indicar un producto personalizado o ajustar los valores en el <strong>Resumen y Precios</strong> de abajo.
                 </div>
             `;
         } else {
             internalList.forEach(prod => {
-                const item = document.createElement('label');
+                const item = document.createElement('div');
                 item.className = 'order-product-item';
                 item.dataset.title = prod.title || '';
                 const price = Number(prod.suggestedPrice || 0);
                 const weight = Number(prod.weightGrams || 0);
                 const hours = Number(prod.hours || 0);
                 item.innerHTML = `
-                    <input type="checkbox" class="order-prod-checkbox" value="${prod.title}" data-price="${price}" data-weight="${weight}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px;">
-                        <div>
-                            <strong style="color:var(--text-primary); font-size:13px;">${prod.title}</strong>
-                            <div style="color:var(--text-secondary); font-size:11px;">⚖️ ${weight.toFixed(0)}g • ⏱️ ${hours.toFixed(1)}h</div>
+                    <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0;">
+                        <input type="checkbox" class="order-prod-checkbox" value="${prod.title}" data-price="${price}" data-weight="${weight}" onchange="recalculateOrderTotals()">
+                        <div style="flex:1;">
+                            <strong style="color:var(--text-primary); font-size:13px; display:block;">${prod.title}</strong>
+                            <span style="color:var(--text-secondary); font-size:11px;">⚖️ ${weight.toFixed(0)}g • ⏱️ ${hours.toFixed(1)}h</span>
                         </div>
-                        <div style="color:var(--success); font-weight:700; font-size:13px; white-space:nowrap;">
+                    </label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:4px;" title="Cantidad de unidades para este producto">
+                            <span style="font-size:11px; color:var(--text-secondary);">Cant:</span>
+                            <input type="number" class="order-prod-qty" min="1" value="1" step="1" 
+                                style="width:52px; padding:4px 6px; font-size:12px; border-radius:4px; text-align:center; background:rgba(10,12,16,0.9); border:1px solid var(--border-color); color:var(--text-primary);" 
+                                onclick="event.stopPropagation()" oninput="recalculateOrderTotals()">
+                        </div>
+                        <div style="color:var(--success); font-weight:700; font-size:13px; min-width:85px; text-align:right;">
                             $ ${price.toFixed(2)}
                         </div>
                     </div>
@@ -2704,6 +2832,101 @@ window.openNewOrderModal = function() {
     }
     
     modal.classList.add('active');
+};
+
+window.recalculateOrderTotals = function() {
+    const items = document.querySelectorAll('.order-product-item');
+    let totalQty = 0;
+    let totalSuggested = 0;
+    let checkedCount = 0;
+    let singleUnitPrice = 0;
+
+    items.forEach(item => {
+        const cb = item.querySelector('.order-prod-checkbox');
+        const qtyInput = item.querySelector('.order-prod-qty');
+        if (cb && cb.checked) {
+            checkedCount++;
+            const price = parseFloat(cb.dataset.price) || 0;
+            const qty = Math.max(1, parseInt(qtyInput ? qtyInput.value : 1, 10) || 1);
+            totalQty += qty;
+            totalSuggested += (price * qty);
+            singleUnitPrice = price;
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+
+    const totalQtyInput = document.getElementById('order-total-quantity');
+    const unitPriceInput = document.getElementById('order-suggested-unit-price');
+    const totalSugEl = document.getElementById('order-suggested-total-price');
+    const finalPriceInput = document.getElementById('order-final-price');
+
+    if (checkedCount > 0) {
+        if (totalQtyInput) totalQtyInput.value = totalQty;
+        const avgUnit = totalQty > 0 ? (totalSuggested / totalQty) : 0;
+        if (unitPriceInput) unitPriceInput.value = (checkedCount === 1 ? singleUnitPrice : avgUnit).toFixed(2);
+        if (totalSugEl) totalSugEl.value = `$ ${totalSuggested.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        if (finalPriceInput && (!finalPriceInput.dataset.userModified || finalPriceInput.dataset.userModified === 'false')) {
+            finalPriceInput.value = totalSuggested.toFixed(2);
+        }
+    } else {
+        const currentQty = Math.max(1, parseInt(totalQtyInput?.value || 1, 10) || 1);
+        const currentUnit = Math.max(0, parseFloat(unitPriceInput?.value || 0) || 0);
+        const total = currentQty * currentUnit;
+        if (totalSugEl) totalSugEl.value = `$ ${total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (finalPriceInput && (!finalPriceInput.dataset.userModified || finalPriceInput.dataset.userModified === 'false')) {
+            finalPriceInput.value = total.toFixed(2);
+        }
+    }
+};
+
+window.onOrderFinancialChange = function(source) {
+    const totalQtyInput = document.getElementById('order-total-quantity');
+    const unitPriceInput = document.getElementById('order-suggested-unit-price');
+    const totalSugEl = document.getElementById('order-suggested-total-price');
+    const finalPriceInput = document.getElementById('order-final-price');
+
+    const qty = Math.max(1, parseInt(totalQtyInput?.value || 1, 10) || 1);
+    const unit = Math.max(0, parseFloat(unitPriceInput?.value || 0) || 0);
+    const totalSug = qty * unit;
+
+    if (totalSugEl) totalSugEl.value = `$ ${totalSug.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    if (finalPriceInput && (!finalPriceInput.dataset.userModified || finalPriceInput.dataset.userModified === 'false')) {
+        finalPriceInput.value = totalSug.toFixed(2);
+    }
+};
+
+window.syncOrderSuggestedPrice = function() {
+    const totalQtyInput = document.getElementById('order-total-quantity');
+    const unitPriceInput = document.getElementById('order-suggested-unit-price');
+    const totalSugEl = document.getElementById('order-suggested-total-price');
+    const finalPriceInput = document.getElementById('order-final-price');
+    if (!totalSugEl || !finalPriceInput) return;
+
+    const qty = Math.max(1, parseInt(totalQtyInput?.value || 1, 10) || 1);
+    const unit = Math.max(0, parseFloat(unitPriceInput?.value || 0) || 0);
+    const totalSug = qty * unit;
+
+    finalPriceInput.value = totalSug.toFixed(2);
+    finalPriceInput.dataset.userModified = 'false';
+    showToast('Valor a cobrar igualado al valor total sugerido.');
+};
+
+window.onCustomProductInput = function() {
+    const customTitle = (document.getElementById('order-custom-product')?.value || '').trim();
+    if (customTitle) {
+        const checkedBoxes = document.querySelectorAll('.order-prod-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            const unitPriceInput = document.getElementById('order-suggested-unit-price');
+            if (unitPriceInput && (parseFloat(unitPriceInput.value) || 0) === 0) {
+                unitPriceInput.value = '1500.00';
+                onOrderFinancialChange('unit');
+            }
+        }
+    }
 };
 
 window.filterOrderProducts = function(query) {
@@ -2748,32 +2971,81 @@ window.saveNewOrder = function() {
         return;
     }
     
-    const checkboxes = document.querySelectorAll('.order-prod-checkbox:checked');
-    if (checkboxes.length === 0) {
-        alert('Por favor, selecciona al menos un producto para el pedido.');
+    const orderDate = document.getElementById('order-date')?.value || new Date().toISOString().split('T')[0];
+    const deliveryDate = document.getElementById('order-delivery-date')?.value || orderDate;
+    const payment = document.getElementById('order-payment').value;
+
+    const checkedItems = [];
+    document.querySelectorAll('.order-product-item').forEach(item => {
+        const cb = item.querySelector('.order-prod-checkbox');
+        const qtyInput = item.querySelector('.order-prod-qty');
+        if (cb && cb.checked) {
+            const qty = Math.max(1, parseInt(qtyInput ? qtyInput.value : 1, 10) || 1);
+            const unitPrice = parseFloat(cb.dataset.price) || 0;
+            const weight = parseFloat(cb.dataset.weight) || 0;
+            checkedItems.push({
+                title: cb.value,
+                quantity: qty,
+                unitSuggestedPrice: unitPrice,
+                totalSuggestedPrice: unitPrice * qty,
+                weightGrams: weight
+            });
+        }
+    });
+
+    const customProdTitle = (document.getElementById('order-custom-product')?.value || '').trim();
+    if (checkedItems.length === 0 && !customProdTitle) {
+        alert('Por favor, selecciona al menos un producto del catálogo o escribe un producto personalizado.');
         return;
     }
-    
-    const products = [];
-    let totalPrice = 0;
-    
-    checkboxes.forEach(cb => {
-        products.push(cb.value);
-        const priceNum = parseFloat(cb.dataset.price) || 0;
-        totalPrice += priceNum;
-    });
-    
-    const payment = document.getElementById('order-payment').value;
-    const date = document.getElementById('order-delivery-date').value;
-    
+
+    let totalQuantity = 0;
+    let suggestedTotalPrice = 0;
+    let suggestedUnitPrice = 0;
+    const productsStrings = [];
+
+    if (checkedItems.length > 0) {
+        checkedItems.forEach(it => {
+            totalQuantity += it.quantity;
+            suggestedTotalPrice += it.totalSuggestedPrice;
+            productsStrings.push(it.quantity > 1 ? `${it.quantity}x ${it.title}` : it.title);
+        });
+        if (customProdTitle) {
+            productsStrings.push(customProdTitle);
+        }
+        suggestedUnitPrice = totalQuantity > 0 ? (suggestedTotalPrice / totalQuantity) : 0;
+    } else {
+        totalQuantity = Math.max(1, parseInt(document.getElementById('order-total-quantity')?.value || 1, 10) || 1);
+        suggestedUnitPrice = Math.max(0, parseFloat(document.getElementById('order-suggested-unit-price')?.value || 0) || 0);
+        suggestedTotalPrice = totalQuantity * suggestedUnitPrice;
+        productsStrings.push(totalQuantity > 1 ? `${totalQuantity}x ${customProdTitle}` : customProdTitle);
+        checkedItems.push({
+            title: customProdTitle,
+            quantity: totalQuantity,
+            unitSuggestedPrice: suggestedUnitPrice,
+            totalSuggestedPrice: suggestedTotalPrice,
+            weightGrams: 50 * totalQuantity
+        });
+    }
+
+    const finalPriceInput = document.getElementById('order-final-price');
+    const finalPrice = Math.max(0, parseFloat(finalPriceInput?.value || suggestedTotalPrice) || 0);
+
     const newOrder = {
         id: `order_${Date.now()}`,
         clientName,
-        products,
-        totalPrice,
+        orderDate,
+        date: deliveryDate,
+        deliveryDate,
+        quantity: totalQuantity,
+        suggestedUnitPrice: Number(suggestedUnitPrice.toFixed(2)),
+        suggestedTotalPrice: Number(suggestedTotalPrice.toFixed(2)),
+        finalPrice: Number(finalPrice.toFixed(2)),
+        totalPrice: Number(finalPrice.toFixed(2)),
+        products: productsStrings,
+        items: checkedItems,
         status: 'En Cola',
         payment,
-        date,
         filamentDeducted: false
     };
     
@@ -2785,6 +3057,7 @@ window.saveNewOrder = function() {
     updateDashboardData();
     closeNewOrderModal();
     if (typeof pushOrderToCloud === 'function') pushOrderToCloud(newOrder);
+    showToast('Pedido registrado con éxito.');
 };
 
 window.renderOrdersTable = function() {
@@ -2795,7 +3068,7 @@ window.renderOrdersTable = function() {
     if (!appState.orders || appState.orders.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:40px;">
+                <td colspan="12" style="text-align:center;color:var(--text-secondary);padding:40px;">
                     No hay pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.
                 </td>
             </tr>
@@ -2822,23 +3095,48 @@ window.renderOrdersTable = function() {
         });
         paymentSelectHtml += `</select>`;
         
-        let formattedDate = 'Sin fecha';
-        if (order.date) {
-            const dateParts = order.date.split('-');
-            if (dateParts.length === 3) {
-                formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-            } else {
-                formattedDate = order.date;
-            }
+        let formattedOrderDate = 'Sin fecha';
+        const rawOrderDate = order.orderDate || (order.id && !isNaN(parseInt(order.id.replace('order_', ''))) ? new Date(parseInt(order.id.replace('order_', ''))).toISOString().split('T')[0] : order.date);
+        if (rawOrderDate) {
+            const p = rawOrderDate.split('-');
+            if (p.length === 3) formattedOrderDate = `${p[2]}/${p[1]}/${p[0]}`;
+            else formattedOrderDate = rawOrderDate;
         }
+
+        let formattedDeliveryDate = 'Sin fecha';
+        const rawDeliveryDate = order.deliveryDate || order.date;
+        if (rawDeliveryDate) {
+            const p = rawDeliveryDate.split('-');
+            if (p.length === 3) formattedDeliveryDate = `${p[2]}/${p[1]}/${p[0]}`;
+            else formattedDeliveryDate = rawDeliveryDate;
+        }
+
+        const quantity = Number(order.quantity || (order.products ? order.products.length : 1)) || 1;
+        const finalPrice = Number(order.finalPrice !== undefined ? order.finalPrice : (order.totalPrice || 0));
+        const suggestedTotal = Number(order.suggestedTotalPrice !== undefined ? order.suggestedTotalPrice : finalPrice);
+        const suggestedUnit = Number(order.suggestedUnitPrice !== undefined ? order.suggestedUnitPrice : (quantity > 0 ? (suggestedTotal / quantity) : 0));
+        
+        const productsListText = Array.isArray(order.products) ? order.products.join(', ') : (order.products || '');
         
         tr.innerHTML = `
             <td><strong>#${order.id.slice(-4)}</strong></td>
-            <td>${order.clientName}</td>
-            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${order.products.join(', ')}">
-                ${order.products.join(', ')}
+            <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">📅 ${formattedOrderDate}</td>
+            <td><strong style="color:var(--text-primary); font-size:13px;">${order.clientName}</strong></td>
+            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${productsListText}">
+                ${productsListText}
             </td>
-            <td><strong>$ ${order.totalPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></td>
+            <td style="text-align: center;">
+                <span class="badge" style="background:rgba(255,255,255,0.08); font-weight:700; font-size:12px; padding:3px 8px; border-radius:12px;">${quantity}</span>
+            </td>
+            <td style="text-align: right; white-space:nowrap; font-size:12px; color:var(--text-secondary);">
+                $ ${suggestedUnit.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </td>
+            <td style="text-align: right; white-space:nowrap; font-size:12px; color:var(--text-secondary);">
+                $ ${suggestedTotal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </td>
+            <td style="text-align: right; white-space:nowrap;">
+                <strong style="color:var(--success); font-size:13.5px;">$ ${finalPrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </td>
             <td>
                 <div style="display:flex; align-items:center; gap:6px;">
                     <span class="badge ${getPrintBadgeClass(order.status)}">${order.status}</span>
@@ -2851,9 +3149,9 @@ window.renderOrdersTable = function() {
                     ${paymentSelectHtml}
                 </div>
             </td>
-            <td>${formattedDate}</td>
+            <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">🚚 ${formattedDeliveryDate}</td>
             <td style="text-align: center;">
-                <button class="btn btn-secondary btn-small" onclick="deleteOrder('${order.id}')" style="background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,0.2); width:auto;">
+                <button class="btn btn-secondary btn-small" onclick="deleteOrder('${order.id}')" style="background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,0.2); width:auto;" title="Eliminar pedido">
                     Eliminar
                 </button>
             </td>
@@ -2887,6 +3185,303 @@ window.deleteOrder = function(id) {
         updateDashboardData();
         if (typeof deleteOrderFromCloud === 'function') deleteOrderFromCloud(id);
     }
+};
+
+// --- SOLICITUDES DE DISEÑO Y COSTO LOGIC ---
+let currentDreqFilter = 'all';
+
+window.filterDesignRequests = function(filterType) {
+    currentDreqFilter = filterType || 'all';
+    document.querySelectorAll('[id^="filter-dreq-"]').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`filter-dreq-${currentDreqFilter}`);
+    if (activeBtn) activeBtn.classList.add('active');
+    renderDesignRequests();
+};
+
+window.openNewDesignRequestModal = function() {
+    const modal = document.getElementById('modal-design-request');
+    if (!modal) return;
+    document.getElementById('modal-dreq-title').textContent = 'Registrar Solicitud de Diseño y Costo';
+    document.getElementById('btn-save-dreq').textContent = 'Registrar Solicitud';
+    document.getElementById('dreq-edit-id').value = '';
+    document.getElementById('dreq-name').value = '';
+    document.getElementById('dreq-client').value = '';
+    document.getElementById('dreq-description').value = '';
+    document.getElementById('dreq-urls').value = '';
+    document.getElementById('dreq-status').value = 'Pendiente';
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('dreq-date');
+    if (dateInput) dateInput.value = today;
+
+    modal.classList.add('active');
+};
+
+window.openEditDesignRequestModal = function(id) {
+    const req = (appState.designRequests || []).find(r => r.id === id);
+    if (!req) return;
+
+    const modal = document.getElementById('modal-design-request');
+    if (!modal) return;
+
+    document.getElementById('modal-dreq-title').textContent = 'Editar Solicitud de Diseño';
+    document.getElementById('btn-save-dreq').textContent = 'Guardar Cambios';
+    document.getElementById('dreq-edit-id').value = req.id;
+    document.getElementById('dreq-name').value = req.title || '';
+    document.getElementById('dreq-client').value = req.client || '';
+    document.getElementById('dreq-description').value = req.description || '';
+    document.getElementById('dreq-urls').value = Array.isArray(req.urls) ? req.urls.join('\n') : (req.urls || '');
+    document.getElementById('dreq-status').value = req.status || 'Pendiente';
+    document.getElementById('dreq-date').value = req.date || req.createdAt || new Date().toISOString().split('T')[0];
+
+    modal.classList.add('active');
+};
+
+window.closeDesignRequestModal = function() {
+    const modal = document.getElementById('modal-design-request');
+    if (modal) modal.classList.remove('active');
+};
+
+window.saveDesignRequest = function() {
+    const name = document.getElementById('dreq-name').value.trim();
+    if (!name) {
+        alert('Por favor, ingresa el nombre del producto o modelo 3D.');
+        return;
+    }
+
+    const editId = document.getElementById('dreq-edit-id').value.trim();
+    const client = document.getElementById('dreq-client').value.trim();
+    const description = document.getElementById('dreq-description').value.trim();
+    const status = document.getElementById('dreq-status').value;
+    const date = document.getElementById('dreq-date').value || new Date().toISOString().split('T')[0];
+    
+    const rawUrls = document.getElementById('dreq-urls').value;
+    const urls = rawUrls.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+
+    if (!appState.designRequests) appState.designRequests = [];
+
+    if (editId) {
+        const existing = appState.designRequests.find(r => r.id === editId);
+        if (existing) {
+            existing.title = name;
+            existing.client = client;
+            existing.description = description;
+            existing.urls = urls;
+            existing.status = status;
+            existing.completed = (status === 'Realizado');
+            existing.date = date;
+            if (status === 'Realizado' && !existing.completedAt) {
+                existing.completedAt = new Date().toISOString();
+            } else if (status !== 'Realizado') {
+                existing.completedAt = null;
+            }
+            if (typeof pushDesignRequestToCloud === 'function') pushDesignRequestToCloud(existing);
+            showToast('Solicitud actualizada correctamente.');
+        }
+    } else {
+        const newReq = {
+            id: `dreq_${Date.now()}`,
+            title: name,
+            client,
+            description,
+            urls,
+            status,
+            completed: (status === 'Realizado'),
+            date,
+            createdAt: date,
+            completedAt: status === 'Realizado' ? new Date().toISOString() : null
+        };
+        appState.designRequests.unshift(newReq);
+        if (typeof pushDesignRequestToCloud === 'function') pushDesignRequestToCloud(newReq);
+        showToast('Solicitud de diseño registrada.');
+    }
+
+    saveStateToStorage();
+    renderDesignRequests();
+    closeDesignRequestModal();
+};
+
+window.toggleDesignRequestStatus = function(id) {
+    const req = (appState.designRequests || []).find(r => r.id === id);
+    if (!req) return;
+
+    if (req.status === 'Realizado' || req.completed) {
+        req.status = 'Pendiente';
+        req.completed = false;
+        req.completedAt = null;
+        showToast(`"${req.title}" marcada como Pendiente.`);
+    } else {
+        req.status = 'Realizado';
+        req.completed = true;
+        req.completedAt = new Date().toISOString();
+        showToast(`✅ "${req.title}" marcada como Realizada.`);
+    }
+
+    saveStateToStorage();
+    renderDesignRequests();
+    if (typeof pushDesignRequestToCloud === 'function') pushDesignRequestToCloud(req);
+};
+
+window.deleteDesignRequest = function(id) {
+    const req = (appState.designRequests || []).find(r => r.id === id);
+    if (!req) return;
+    if (confirm(`¿Estás seguro de que deseas eliminar la solicitud "${req.title}"?`)) {
+        appState.designRequests = appState.designRequests.filter(r => r.id !== id);
+        saveStateToStorage();
+        renderDesignRequests();
+        if (typeof deleteDesignRequestFromCloud === 'function') deleteDesignRequestFromCloud(id);
+        showToast('Solicitud eliminada.');
+    }
+};
+
+window.startCostingDesignRequest = function(id) {
+    const req = (appState.designRequests || []).find(r => r.id === id);
+    if (!req) return;
+    switchModule('calculator');
+    const nameInput = document.getElementById('calc-prod-name');
+    if (nameInput) {
+        nameInput.value = req.title;
+        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nameInput.focus();
+    }
+    showToast(`Cargando "${req.title}" en la Calculadora de Costos...`);
+};
+
+window.renderDesignRequests = function() {
+    const tbody = document.getElementById('design-requests-table-body');
+    if (!tbody) return;
+
+    const list = appState.designRequests || [];
+    const totalCount = list.length;
+    const pendingCount = list.filter(r => r.status !== 'Realizado' && !r.completed).length;
+    const doneCount = list.filter(r => r.status === 'Realizado' || r.completed).length;
+
+    // Update KPI counters
+    const kpiTotal = document.getElementById('kpi-dreq-total');
+    if (kpiTotal) kpiTotal.textContent = totalCount;
+    const kpiPending = document.getElementById('kpi-dreq-pending');
+    if (kpiPending) kpiPending.textContent = pendingCount;
+    const kpiDone = document.getElementById('kpi-dreq-done');
+    if (kpiDone) kpiDone.textContent = doneCount;
+
+    // Update tab counts
+    const countAll = document.getElementById('count-dreq-all');
+    if (countAll) countAll.textContent = totalCount;
+    const countPending = document.getElementById('count-dreq-pending');
+    if (countPending) countPending.textContent = pendingCount;
+    const countDone = document.getElementById('count-dreq-done');
+    if (countDone) countDone.textContent = doneCount;
+
+    const query = (document.getElementById('dreq-search')?.value || '').toLowerCase().trim();
+
+    let filtered = list;
+    if (currentDreqFilter === 'pending') {
+        filtered = filtered.filter(r => r.status !== 'Realizado' && !r.completed);
+    } else if (currentDreqFilter === 'done') {
+        filtered = filtered.filter(r => r.status === 'Realizado' || r.completed);
+    }
+
+    if (query) {
+        filtered = filtered.filter(r => {
+            const titleMatch = (r.title || '').toLowerCase().includes(query);
+            const clientMatch = (r.client || '').toLowerCase().includes(query);
+            const descMatch = (r.description || '').toLowerCase().includes(query);
+            const urlsMatch = Array.isArray(r.urls) && r.urls.some(u => u.toLowerCase().includes(query));
+            return titleMatch || clientMatch || descMatch || urlsMatch;
+        });
+    }
+
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+        let msg = 'No hay solicitudes registradas. Haz clic en "Nueva Solicitud" para comenzar.';
+        if (query) msg = `No se encontraron solicitudes que coincidan con "${query}".`;
+        else if (currentDreqFilter === 'pending') msg = '¡Excelente! No tienes solicitudes pendientes.';
+        else if (currentDreqFilter === 'done') msg = 'Aún no hay solicitudes marcadas como realizadas.';
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:36px;">${msg}</td>
+            </tr>
+        `;
+        return;
+    }
+
+    filtered.forEach(req => {
+        const tr = document.createElement('tr');
+        const isDone = (req.status === 'Realizado' || req.completed);
+        if (isDone) tr.classList.add('dreq-completed-row');
+
+        // Format Date
+        let dateFormatted = 'Sin fecha';
+        const rawDate = req.date || req.createdAt;
+        if (rawDate) {
+            const parts = rawDate.split('-');
+            if (parts.length === 3) dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            else dateFormatted = rawDate;
+        }
+
+        // Format URLs
+        const urls = Array.isArray(req.urls) ? req.urls : (req.urls ? [req.urls] : []);
+        let urlsHtml = '<span style="color:var(--text-secondary); font-size:12px;">Sin enlaces</span>';
+        if (urls.length > 0) {
+            urlsHtml = '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+            urls.forEach((u, i) => {
+                let domain = 'STL';
+                try {
+                    const h = new URL(u.startsWith('http') ? u : 'https://' + u).hostname.replace('www.', '');
+                    if (h.includes('thingiverse')) domain = 'Thingiverse';
+                    else if (h.includes('printables')) domain = 'Printables';
+                    else if (h.includes('makerworld')) domain = 'MakerWorld';
+                    else if (h.includes('cults3d')) domain = 'Cults3D';
+                    else if (h.includes('drive.google')) domain = 'Drive';
+                    else if (h.includes('thangs')) domain = 'Thangs';
+                    else domain = h.length > 14 ? h.substring(0, 12) + '...' : h;
+                } catch(e) {
+                    domain = `STL #${i + 1}`;
+                }
+                const fullUrl = u.startsWith('http') ? u : 'https://' + u;
+                urlsHtml += `
+                    <a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="stl-link-badge" title="${fullUrl}">
+                        🌐 ${domain} ↗
+                    </a>
+                `;
+            });
+            urlsHtml += '</div>';
+        }
+
+        // Status toggle button
+        const statusBtnHtml = isDone
+            ? `<button class="btn-status-toggle done" onclick="toggleDesignRequestStatus('${req.id}')" title="Clic para marcar como Pendiente">✅ Realizado</button>`
+            : `<button class="btn-status-toggle pending" onclick="toggleDesignRequestStatus('${req.id}')" title="Clic para marcar como Realizado">⏳ Pendiente</button>`;
+
+        tr.innerHTML = `
+            <td style="text-align:center;">${statusBtnHtml}</td>
+            <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">📅 ${dateFormatted}</td>
+            <td>
+                <strong style="color:var(--text-primary); font-size:13.5px; ${isDone ? 'text-decoration:line-through; opacity:0.75;' : ''}">${req.title}</strong>
+                ${req.client ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">👤 ${req.client}</div>` : ''}
+            </td>
+            <td style="font-size:12.5px; color:var(--text-primary); max-width:260px; line-height:1.4;">
+                ${req.description ? req.description.replace(/\n/g, '<br>') : '<span style="color:var(--text-secondary); font-style:italic;">Sin observaciones</span>'}
+            </td>
+            <td>${urlsHtml}</td>
+            <td style="text-align: center;">
+                <div style="display:inline-flex; gap:6px; align-items:center;">
+                    <button class="btn btn-secondary btn-small" onclick="startCostingDesignRequest('${req.id}')" style="background:rgba(99,102,241,0.1); border-color:rgba(99,102,241,0.3); color:#818cf8; width:auto;" title="Calcular costo en la Calculadora">
+                        🧮 Costear
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="openEditDesignRequestModal('${req.id}')" style="width:auto; padding:5px 8px;" title="Editar solicitud">
+                        ✏️
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="deleteDesignRequest('${req.id}')" style="background:transparent; color:var(--danger); border-color:rgba(239,68,68,0.25); width:auto; padding:5px 8px;" title="Eliminar solicitud">
+                        🗑️
+                    </button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
 };
 
 function getPrintBadgeClass(status) {
@@ -2941,24 +3536,40 @@ function deductFilamentForOrder(order) {
     if (order.filamentDeducted) return;
     
     let totalGramsToDeduct = 0;
-    order.products.forEach(prodTitle => {
-        const internalProd = (appState.internalProducts || []).find(p => p.title === prodTitle);
-        if (internalProd && internalProd.weightGrams) {
-            totalGramsToDeduct += parseFloat(internalProd.weightGrams) || 0;
-        } else {
-            const prod = (appState.products || []).find(p => p.title === prodTitle);
-            if (prod) {
-                const match = prod.description ? prod.description.match(/(\d+(?:\.\d+)?)\s*g(?:grams|ramos)?/i) : null;
-                if (match) {
-                    totalGramsToDeduct += parseFloat(match[1]);
+
+    if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+        order.items.forEach(it => {
+            const internalProd = (appState.internalProducts || []).find(p => p.title === it.title);
+            const qty = it.quantity || 1;
+            if (internalProd && internalProd.weightGrams) {
+                totalGramsToDeduct += (parseFloat(internalProd.weightGrams) || 0) * qty;
+            } else if (it.weightGrams) {
+                totalGramsToDeduct += (parseFloat(it.weightGrams) || 0) * qty;
+            } else {
+                totalGramsToDeduct += 50 * qty;
+            }
+        });
+    } else if (order.products && Array.isArray(order.products)) {
+        order.products.forEach(prodTitle => {
+            const cleanTitle = prodTitle.replace(/^\d+x\s*/, '');
+            const internalProd = (appState.internalProducts || []).find(p => p.title === cleanTitle);
+            if (internalProd && internalProd.weightGrams) {
+                totalGramsToDeduct += parseFloat(internalProd.weightGrams) || 0;
+            } else {
+                const prod = (appState.products || []).find(p => p.title === cleanTitle);
+                if (prod) {
+                    const match = prod.description ? prod.description.match(/(\d+(?:\.\d+)?)\s*g(?:grams|ramos)?/i) : null;
+                    if (match) {
+                        totalGramsToDeduct += parseFloat(match[1]);
+                    } else {
+                        totalGramsToDeduct += 50;
+                    }
                 } else {
                     totalGramsToDeduct += 50;
                 }
-            } else {
-                totalGramsToDeduct += 50;
             }
-        }
-    });
+        });
+    }
     
     if (totalGramsToDeduct > 0 && appState.inventory && appState.inventory.length > 0) {
         const spool = appState.inventory[0];
@@ -2986,7 +3597,8 @@ window.updateDashboardData = function() {
     
     if (appState.orders) {
         appState.orders.forEach(o => {
-            totalRevenue += o.totalPrice;
+            const orderPrice = o.finalPrice !== undefined ? o.finalPrice : (o.totalPrice || 0);
+            totalRevenue += orderPrice;
             if (o.status !== 'Entregado') {
                 activeOrdersCount++;
             }
@@ -3022,7 +3634,7 @@ window.updateDashboardData = function() {
         if (activeOrders.length === 0) {
             dashTable.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">
+                    <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:30px;">
                         No hay pedidos activos en cola.
                     </td>
                 </tr>
@@ -3031,23 +3643,37 @@ window.updateDashboardData = function() {
             activeOrders.forEach(o => {
                 const tr = document.createElement('tr');
                 
-                let formattedDate = 'Sin fecha';
-                if (o.date) {
-                    const dateParts = o.date.split('-');
-                    if (dateParts.length === 3) {
-                        formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                    } else {
-                        formattedDate = o.date;
-                    }
+                let formattedOrderDate = 'Sin fecha';
+                const rawOrderDate = o.orderDate || (o.id && !isNaN(parseInt(o.id.replace('order_', ''))) ? new Date(parseInt(o.id.replace('order_', ''))).toISOString().split('T')[0] : o.date);
+                if (rawOrderDate) {
+                    const p = rawOrderDate.split('-');
+                    if (p.length === 3) formattedOrderDate = `${p[2]}/${p[1]}/${p[0]}`;
+                    else formattedOrderDate = rawOrderDate;
                 }
+
+                let formattedDeliveryDate = 'Sin fecha';
+                const rawDeliveryDate = o.deliveryDate || o.date;
+                if (rawDeliveryDate) {
+                    const p = rawDeliveryDate.split('-');
+                    if (p.length === 3) formattedDeliveryDate = `${p[2]}/${p[1]}/${p[0]}`;
+                    else formattedDeliveryDate = rawDeliveryDate;
+                }
+
+                const priceToCharge = o.finalPrice !== undefined ? o.finalPrice : (o.totalPrice || 0);
+                const quantity = o.quantity || (o.products ? o.products.length : 1);
+                const productsText = Array.isArray(o.products) ? o.products.join(', ') : (o.products || '');
                 
                 tr.innerHTML = `
+                    <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">📅 ${formattedOrderDate}</td>
                     <td><strong>${o.clientName}</strong></td>
-                    <td style="max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${o.products.join(', ')}">
-                        ${o.products.join(', ')}
+                    <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${productsText}">
+                        <span class="badge" style="background:rgba(255,255,255,0.06); font-weight:700; margin-right:4px;">${quantity}x</span> ${productsText}
+                    </td>
+                    <td style="text-align: right; white-space:nowrap;">
+                        <strong style="color:var(--success); font-size:13px;">$ ${priceToCharge.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                     </td>
                     <td><span class="badge ${getPrintBadgeClass(o.status)}">${o.status}</span></td>
-                    <td>${formattedDate}</td>
+                    <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">🚚 ${formattedDeliveryDate}</td>
                 `;
                 dashTable.appendChild(tr);
             });

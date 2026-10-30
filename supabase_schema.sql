@@ -24,9 +24,21 @@ CREATE TABLE IF NOT EXISTS public.orders (
     status TEXT NOT NULL DEFAULT 'En Cola',
     payment TEXT NOT NULL DEFAULT 'Pendiente',
     date TEXT,
+    order_date TEXT,
+    quantity NUMERIC NOT NULL DEFAULT 1,
+    suggested_unit_price NUMERIC DEFAULT 0,
+    suggested_total_price NUMERIC DEFAULT 0,
+    final_price NUMERIC DEFAULT 0,
     filament_deducted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Migraciones seguras para proyectos existentes:
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS order_date TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS quantity NUMERIC DEFAULT 1;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS suggested_unit_price NUMERIC DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS suggested_total_price NUMERIC DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS final_price NUMERIC DEFAULT 0;
 
 -- 3. TABLA: CATÁLOGO INTERNO (DISEÑOS Y DESGLOSE DE COSTOS)
 CREATE TABLE IF NOT EXISTS public.internal_products (
@@ -142,3 +154,28 @@ CREATE POLICY "Permitir insercion de configuracion" ON public.app_settings FOR I
 
 DROP POLICY IF EXISTS "Permitir actualizacion de configuracion" ON public.app_settings;
 CREATE POLICY "Permitir actualizacion de configuracion" ON public.app_settings FOR UPDATE USING (true);
+
+-- 6. TABLA: SOLICITUDES DE DISEÑO Y COSTO
+CREATE TABLE IF NOT EXISTS public.design_requests (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    client TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+    status TEXT NOT NULL DEFAULT 'Pendiente',
+    completed BOOLEAN DEFAULT FALSE,
+    date TEXT DEFAULT '',
+    created_at TEXT DEFAULT '',
+    completed_at TEXT,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.design_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir lectura solicitudes diseno" ON public.design_requests;
+CREATE POLICY "Permitir lectura solicitudes diseno" ON public.design_requests FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir insercion solicitudes diseno" ON public.design_requests;
+CREATE POLICY "Permitir insercion solicitudes diseno" ON public.design_requests FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir actualizacion solicitudes diseno" ON public.design_requests;
+CREATE POLICY "Permitir actualizacion solicitudes diseno" ON public.design_requests FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Permitir eliminacion solicitudes diseno" ON public.design_requests;
+CREATE POLICY "Permitir eliminacion solicitudes diseno" ON public.design_requests FOR DELETE USING (true);

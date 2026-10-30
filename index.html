@@ -116,6 +116,12 @@
                     </svg>
                     <span>Pedidos</span>
                 </button>
+                <button type="button" class="nav-item" id="btn-nav-design-requests" onclick="switchModule('design-requests')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                    </svg>
+                    <span>Diseño y Costeo</span>
+                </button>
                 <button type="button" class="nav-item" id="btn-nav-catalog" onclick="switchModule('catalog')">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -226,15 +232,17 @@
                             <table>
                                 <thead>
                                     <tr>
+                                        <th>Fecha Pedido</th>
                                         <th>Cliente</th>
                                         <th>Detalles del Pedido</th>
+                                        <th style="text-align: right;">Valor a Cobrar</th>
                                         <th>Estado Impresión</th>
                                         <th>Entrega</th>
                                     </tr>
                                 </thead>
                                 <tbody id="dashboard-orders-table">
                                     <tr>
-                                        <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando pedidos...</td>
+                                        <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando pedidos...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -272,9 +280,13 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Fecha Pedido</th>
                                     <th>Cliente</th>
-                                    <th>Productos Incluidos</th>
-                                    <th>Precio Total</th>
+                                    <th>Productos</th>
+                                    <th style="text-align: center;">Cant.</th>
+                                    <th style="text-align: right;">Val. Unit. Sug.</th>
+                                    <th style="text-align: right;">Total Sugerido</th>
+                                    <th style="text-align: right;">Valor a Cobrar</th>
                                     <th>Estado Impresión</th>
                                     <th>Estado Pago</th>
                                     <th>Fecha Entrega</th>
@@ -283,7 +295,104 @@
                             </thead>
                             <tbody id="orders-table-body">
                                 <tr>
-                                    <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:40px;">No hay pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.</td>
+                                    <td colspan="12" style="text-align:center;color:var(--text-secondary);padding:40px;">No hay pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- MODULE: DESIGN AND COST REQUESTS -->
+            <section class="module-view" id="view-design-requests">
+                <div class="module-header">
+                    <div>
+                        <h2>Solicitud de Diseño y Costo</h2>
+                        <p style="color:var(--text-secondary); font-size:13px; margin-top:2px;">
+                            Registro y seguimiento de productos a diseñar, búsqueda de modelos STL y presupuestos
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openNewDesignRequestModal()" style="width:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Nueva Solicitud
+                    </button>
+                </div>
+
+                <!-- KPI / Counters Bar -->
+                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 18px;">
+                    <div class="kpi-card" style="padding: 14px 18px;">
+                        <div class="kpi-icon accent-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Total Solicitudes</span>
+                            <h3 class="kpi-value" id="kpi-dreq-total" style="font-size: 22px;">0</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card" style="padding: 14px 18px;">
+                        <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Pendientes</span>
+                            <h3 class="kpi-value" id="kpi-dreq-pending" style="font-size: 22px; color: #f59e0b;">0</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card" style="padding: 14px 18px;">
+                        <div class="kpi-icon accent-emerald">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="kpi-details">
+                            <span class="kpi-title">Realizadas</span>
+                            <h3 class="kpi-value" id="kpi-dreq-done" style="font-size: 22px; color: var(--success);">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Card: Search, Filters & Table -->
+                <div class="section-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                        <div style="position: relative; flex: 1; min-width: 240px; max-width: 400px;">
+                            <input type="text" id="dreq-search" placeholder="🔍 Buscar por nombre, observación o link..." oninput="renderDesignRequests()" style="padding: 8px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                        </div>
+                        <div class="auth-tabs" style="margin-bottom: 0; background: rgba(10, 12, 16, 0.6); padding: 3px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button type="button" class="auth-tab-btn active" id="filter-dreq-all" onclick="filterDesignRequests('all')" style="padding: 6px 12px; font-size: 12px;">
+                                Todas (<span id="count-dreq-all">0</span>)
+                            </button>
+                            <button type="button" class="auth-tab-btn" id="filter-dreq-pending" onclick="filterDesignRequests('pending')" style="padding: 6px 12px; font-size: 12px;">
+                                ⏳ Pendientes (<span id="count-dreq-pending">0</span>)
+                            </button>
+                            <button type="button" class="auth-tab-btn" id="filter-dreq-done" onclick="filterDesignRequests('done')" style="padding: 6px 12px; font-size: 12px;">
+                                ✅ Realizadas (<span id="count-dreq-done">0</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 130px; text-align: center;">Estado</th>
+                                    <th style="width: 105px;">Fecha</th>
+                                    <th>Producto / Solicitud</th>
+                                    <th>Descripción u Observación</th>
+                                    <th>Enlaces STL / Referencias</th>
+                                    <th style="text-align: center; width: 170px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="design-requests-table-body">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:40px;">
+                                        No hay solicitudes registradas. Haz clic en "Nueva Solicitud" para comenzar.
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -701,6 +810,12 @@
                 </svg>
                 <span>Pedidos</span>
             </button>
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-design-requests" onclick="switchModule('design-requests')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                </svg>
+                <span>Diseños</span>
+            </button>
             <button type="button" class="mobile-nav-item" id="btn-mob-nav-catalog" onclick="switchModule('catalog')">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -732,18 +847,18 @@
 
     <!-- 1. NEW ORDER MODAL -->
     <div class="modal" id="modal-new-order">
-        <div class="modal-content animate-fade" style="max-width: 650px;">
+        <div class="modal-content animate-fade" style="max-width: 680px; max-height: 92vh; overflow-y: auto;">
             <div class="modal-header">
                 <h3>Registrar Nuevo Pedido</h3>
                 <button class="modal-close" onclick="closeNewOrderModal()">&times;</button>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
-                <div class="form-group">
-                    <label for="order-client">Nombre del Cliente</label>
-                    <input type="text" id="order-client" placeholder="Ej. Juan Pérez">
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <!-- Cliente y Estado de Pago -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="order-client">Nombre del Cliente *</label>
+                        <input type="text" id="order-client" placeholder="Ej. Juan Pérez">
+                    </div>
                     <div class="form-group">
                         <label for="order-payment">Estado del Pago</label>
                         <select id="order-payment">
@@ -752,25 +867,125 @@
                             <option value="Pagado Completo">Pagado Completo</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Fechas: Fecha del Pedido y Fecha Prometida de Entrega -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
-                        <label for="order-delivery-date">Fecha Prometida de Entrega</label>
+                        <label for="order-date">📅 Fecha del Pedido *</label>
+                        <input type="date" id="order-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+                    </div>
+                    <div class="form-group">
+                        <label for="order-delivery-date">🚚 Fecha Prometida de Entrega</label>
                         <input type="date" id="order-delivery-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
                     </div>
                 </div>
 
+                <!-- Selección de Productos del Catálogo Interno -->
                 <div class="form-group">
-                    <label for="order-product-search">Seleccionar Productos del Catálogo Interno</label>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                        <label for="order-product-search" style="margin-bottom: 0;">Seleccionar Productos del Catálogo</label>
+                        <span style="font-size: 11px; color: var(--text-secondary);">Indica la cantidad por cada producto</span>
+                    </div>
                     <div style="position: relative; margin-bottom: 8px;">
                         <input type="text" id="order-product-search" placeholder="🔍 Buscar producto en el catálogo..." oninput="filterOrderProducts(this.value)" style="padding: 9px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
                     </div>
                     <div class="order-product-selection-box" id="order-product-list">
                         <!-- Populated dynamically from internal catalog -->
                     </div>
+                    <div style="margin-top: 8px;">
+                        <input type="text" id="order-custom-product" placeholder="➕ O ingresa un producto personalizado (opcional)..." oninput="onCustomProductInput()" style="padding: 8px 12px; font-size: 12px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.6); border: 1px dashed var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <!-- Resumen Financiero y Precios del Pedido -->
+                <div class="order-financial-card" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <strong style="color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                            <span>💰</span> Resumen y Precios del Pedido
+                        </strong>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="syncOrderSuggestedPrice()" style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(16, 185, 129, 0.3); color: var(--success);" title="Restablecer el valor a cobrar al valor total sugerido">
+                            🔄 Igualar al Sugerido
+                        </button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 11px; color: var(--text-secondary);">Cantidad</label>
+                            <input type="number" id="order-total-quantity" value="1" min="1" step="1" oninput="onOrderFinancialChange('qty')" style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 11px; color: var(--text-secondary);">Val. Unit. Sugerido ($)</label>
+                            <input type="number" id="order-suggested-unit-price" value="0.00" min="0" step="0.01" oninput="onOrderFinancialChange('unit')" style="font-weight: 600; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: right;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 11px; color: var(--text-secondary);">Valor Total Sugerido</label>
+                            <input type="text" id="order-suggested-total-price" value="$ 0.00" readonly style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.5); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: not-allowed; text-align: right;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 11px; color: var(--success); font-weight: 700;">Valor a Cobrar ($ ARS) *</label>
+                            <input type="number" id="order-final-price" value="0.00" min="0" step="0.01" oninput="this.dataset.userModified='true'" style="font-weight: 700; font-size: 15px; padding: 8px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.15); text-align: right;">
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeNewOrderModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveNewOrder()" style="width: auto; padding: 8px 16px;">Registrar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1B. DESIGN AND COST REQUEST MODAL -->
+    <div class="modal" id="modal-design-request">
+        <div class="modal-content animate-fade" style="max-width: 650px; max-height: 92vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 id="modal-dreq-title">Registrar Solicitud de Diseño y Costo</h3>
+                <button class="modal-close" onclick="closeDesignRequestModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <input type="hidden" id="dreq-edit-id" value="">
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="dreq-name">Nombre del Producto / Modelo 3D *</label>
+                        <input type="text" id="dreq-name" placeholder="Ej. Soporte para Auriculares, Engranaje batidora" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dreq-client">Cliente / Contacto</label>
+                        <input type="text" id="dreq-client" placeholder="Ej. Juan (WhatsApp)">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="dreq-date">📅 Fecha de Solicitud</label>
+                        <input type="date" id="dreq-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+                    </div>
+                    <div class="form-group">
+                        <label for="dreq-status">Estado</label>
+                        <select id="dreq-status">
+                            <option value="Pendiente">⏳ Pendiente</option>
+                            <option value="Realizado">✅ Realizado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dreq-description">Descripción u Observaciones</label>
+                    <textarea id="dreq-description" rows="3" placeholder="Detalles de diseño, dimensiones aproximadas, requerimientos de resistencia, color o notas del cliente..." style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 13px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                        <label for="dreq-urls" style="margin-bottom: 0;">🌐 Enlaces para descargar STL / Páginas Web</label>
+                        <span style="font-size: 11px; color: var(--text-secondary);">Una o varias URLs (por línea o separadas por coma)</span>
+                    </div>
+                    <textarea id="dreq-urls" rows="3" placeholder="https://www.thingiverse.com/thing:...&#10;https://www.printables.com/model:...&#10;https://makerworld.com/es/models/..." style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: monospace; font-size: 12px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDesignRequestModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDesignRequest()" style="width: auto; padding: 8px 16px;" id="btn-save-dreq">Registrar Solicitud</button>
             </div>
         </div>
     </div>

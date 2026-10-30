@@ -1924,12 +1924,32 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     border-color: rgba(0, 153, 255, 0.3);
 }
 
+.order-product-item.selected {
+    background: rgba(0, 153, 255, 0.12);
+    border-color: rgba(0, 153, 255, 0.45);
+}
+
 .order-product-item input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
     accent-color: var(--jf-blue);
     flex-shrink: 0;
+}
+
+.order-prod-qty {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-prod-qty:focus {
+    border-color: var(--jf-blue) !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 153, 255, 0.25);
+}
+
+.order-financial-card input:focus {
+    outline: none;
+    border-color: var(--jf-blue);
 }
 
 /* Toast Notification */
@@ -2829,4 +2849,75 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     .login-header h2 {
         font-size: 19px;
     }
+}
+
+/* --- SOLICITUDES DE DISEÑO Y COSTO --- */
+.btn-status-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-status-toggle.pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.btn-status-toggle.pending:hover {
+    background: rgba(16, 185, 129, 0.18);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.btn-status-toggle.done {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.btn-status-toggle.done:hover {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.stl-link-badge {
+    background: rgba(0, 153, 255, 0.08);
+    border: 1px solid rgba(0, 153, 255, 0.28);
+    color: var(--jf-blue);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.stl-link-badge:hover {
+    background: rgba(0, 153, 255, 0.22);
+    border-color: var(--jf-blue);
+    color: #ffffff;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 153, 255, 0.25);
+}
+
+.dreq-completed-row td {
+    background: rgba(16, 185, 129, 0.02);
 }

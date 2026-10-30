@@ -1,0 +1,13 @@
+{
+  "name": "jf-3d-studio",
+  "version": "1.0.0",
+  "description": "JF 3D Studio - Sistema Integrado de Gestión y Costos",
+  "scripts": {
+    "build": "echo Build complete",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
