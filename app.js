@@ -7,6 +7,15 @@ let appState = {
     designRequests: [], // array of { id, title, client, description, urls: [], status, completed, date, createdAt, completedAt }
     inventory: [],   // array of { id, brand, material, color, cost, weightGrams, remainingGrams }
     internalProducts: [], // New state storage for cost calculator items (Internal Catalog)
+    whatsappSettings: {
+        notifyOnNewOrder: true,
+        notifyOnNewCost: true,
+        notifyOnDesignRequest: true,
+        recipients: [
+            { enabled: true, name: 'Principal', phone: '+5491166123434', apiKey: '' },
+            { enabled: true, name: 'Destinatario 2', phone: '', apiKey: '' }
+        ]
+    },
     settings: {
         brandName: "JF 3D",
         brandContact: "WhatsApp: +54 9 11 1234-5678 | Instagram: @jf3d.ok",
@@ -57,18 +66,18 @@ const elements = {
     fileInput: document.getElementById('file-input'),
     loadingOverlay: document.getElementById('loading-overlay'),
     loadingText: document.getElementById('loading-text'),
-    
+
     // View Panels
     panelSetup: document.getElementById('panel-setup'),
     panelEditor: document.getElementById('panel-editor'),
     panelPreview: document.getElementById('panel-preview'),
     panelRaw: document.getElementById('panel-raw'),
-    
+
     // Tabs
     tabEditor: document.getElementById('tab-editor'),
     tabPreview: document.getElementById('tab-preview'),
     tabRaw: document.getElementById('tab-raw'),
-    
+
     // Config controls in Sidebar
     sidebar: document.getElementById('sidebar-controls'),
     inputBrandName: document.getElementById('brand-name'),
@@ -87,21 +96,21 @@ const elements = {
     coverUpload: document.getElementById('cover-upload'),
     btnSelectCoverPool: document.getElementById('btn-select-cover-pool'),
     btnUseLogoCover: document.getElementById('btn-use-logo-cover'),
-    
+
     // Lists & Containers
     productGrid: document.getElementById('product-grid'),
     rawContent: document.getElementById('raw-content'),
     previewSheets: document.getElementById('preview-sheets'),
-    
+
     // Stats
     statProducts: document.getElementById('stat-products'),
     statPages: document.getElementById('stat-pages'),
-    
+
     // Modal
     modalImageSelect: document.getElementById('modal-image-select'),
     imagePoolGrid: document.getElementById('image-pool-grid'),
     modalClose: document.getElementById('modal-close'),
-    
+
     // Top-bar action button
     btnPrint: document.getElementById('btn-print'),
     btnReset: document.getElementById('btn-reset'),
@@ -118,28 +127,28 @@ let currentAuthUser = null;
 let currentAuthTab = 'login';
 const MASTER_WORKSHOP_PIN = '1234'; // Clave maestra de taller offline
 
-window.lockApp = function() {
+window.lockApp = function () {
     const appCont = document.getElementById('app-container');
     const loginScreen = document.getElementById('login-screen');
     if (appCont) appCont.classList.add('auth-locked');
     if (loginScreen) loginScreen.classList.remove('hidden');
 };
 
-window.unlockApp = function() {
+window.unlockApp = function () {
     const appCont = document.getElementById('app-container');
     const loginScreen = document.getElementById('login-screen');
     if (appCont) appCont.classList.remove('auth-locked');
     if (loginScreen) loginScreen.classList.add('hidden');
 };
 
-window.setUserSession = function(user) {
+window.setUserSession = function (user) {
     currentAuthUser = user;
     const emailDisp = document.getElementById('user-email-display');
     const avatar = document.getElementById('user-avatar');
-    
+
     const email = user?.email || 'Administrador';
     if (emailDisp) emailDisp.textContent = email;
-    
+
     if (avatar) {
         if (email && email.includes('@')) {
             const initial = email.substring(0, 2).toUpperCase();
@@ -150,7 +159,7 @@ window.setUserSession = function(user) {
     }
 };
 
-window.initAuth = async function() {
+window.initAuth = async function () {
     // 1. Check if offline master session is stored
     if (localStorage.getItem('jf3d_offline_session') === 'true') {
         setUserSession({ email: 'taller@jf3d.local', isOffline: true });
@@ -176,7 +185,7 @@ window.initAuth = async function() {
     lockApp();
 };
 
-window.switchAuthTab = function(tab) {
+window.switchAuthTab = function (tab) {
     currentAuthTab = tab;
     const btnLogin = document.getElementById('tab-auth-login');
     const btnRegister = document.getElementById('tab-auth-register');
@@ -198,13 +207,13 @@ window.switchAuthTab = function(tab) {
     }
 };
 
-window.togglePasswordVisibility = function(inputId) {
+window.togglePasswordVisibility = function (inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
 };
 
-window.showAuthAlert = function(msg, isSuccess = false) {
+window.showAuthAlert = function (msg, isSuccess = false) {
     const alertBox = document.getElementById('auth-alert');
     if (!alertBox) return;
     alertBox.className = 'auth-alert ' + (isSuccess ? 'success' : 'error');
@@ -212,7 +221,7 @@ window.showAuthAlert = function(msg, isSuccess = false) {
     alertBox.style.display = 'flex';
 };
 
-window.handleAuthSubmit = async function(event) {
+window.handleAuthSubmit = async function (event) {
     if (event) event.preventDefault();
     const email = document.getElementById('auth-email')?.value.trim();
     const password = document.getElementById('auth-password')?.value;
@@ -313,10 +322,10 @@ window.handleAuthSubmit = async function(event) {
     }
 };
 
-window.handleQuickStudioAccess = function() {
+window.handleQuickStudioAccess = function () {
     const pin = prompt('Ingresa la Clave Maestra del Taller para acceso rápido offline:', '');
     if (!pin) return;
-    
+
     if (pin.trim() === MASTER_WORKSHOP_PIN || pin.trim() === 'jf3d' || pin.trim() === 'admin') {
         localStorage.setItem('jf3d_offline_session', 'true');
         setUserSession({ email: 'taller@jf3d.local', isOffline: true });
@@ -327,7 +336,7 @@ window.handleQuickStudioAccess = function() {
     }
 };
 
-window.logoutUser = async function() {
+window.logoutUser = async function () {
     if (!confirm('¿Deseas cerrar la sesión actual de JF 3D Studio?')) return;
 
     try {
@@ -344,7 +353,7 @@ window.logoutUser = async function() {
     showToast('Sesión cerrada.');
 };
 
-window.initSupabase = async function() {
+window.initSupabase = async function () {
     if (localStorage.getItem('jf3d_cloud_disabled') === 'true') {
         updateCloudStatusBadge(false, 'Modo Local');
         await initAuth();
@@ -353,9 +362,9 @@ window.initSupabase = async function() {
 
     let url = localStorage.getItem('jf3d_supabase_url') || DEFAULT_SUPABASE_URL;
     const key = localStorage.getItem('jf3d_supabase_key') || DEFAULT_SUPABASE_KEY;
-    
+
     updateCloudStatusBadge(false, 'Conectando...');
-    
+
     if (!url || !key) {
         updateCloudStatusBadge(false, 'Modo Local');
         await initAuth();
@@ -364,14 +373,14 @@ window.initSupabase = async function() {
 
     // Clean URL in case /rest/v1 or trailing slashes were copied
     url = url.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
-    
+
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
         console.warn('Supabase SDK not loaded yet. Running in local mode.');
         updateCloudStatusBadge(false, 'Modo Local');
         await initAuth();
         return;
     }
-    
+
     try {
         supabaseClient = window.supabase.createClient(url, key);
 
@@ -399,11 +408,11 @@ window.initSupabase = async function() {
             updateCloudStatusBadge(false, 'Error Conexión');
             return;
         }
-        
+
         updateCloudStatusBadge(true, 'Nube Conectada');
         const btnDisconnect = document.getElementById('btn-disconnect-supabase');
         if (btnDisconnect) btnDisconnect.style.display = 'block';
-        
+
         await syncFromCloud();
     } catch (err) {
         console.error('Failed to initialize Supabase client:', err);
@@ -423,48 +432,48 @@ function updateCloudStatusBadge(isConnected, text) {
     if (label) label.textContent = text;
 }
 
-window.openSupabaseModal = function() {
+window.openSupabaseModal = function () {
     const modal = document.getElementById('modal-supabase-config');
     if (!modal) return;
-    
+
     const inputUrl = document.getElementById('supabase-url');
     const inputKey = document.getElementById('supabase-anon-key');
     const btnDisconnect = document.getElementById('btn-disconnect-supabase');
-    
+
     if (inputUrl) inputUrl.value = localStorage.getItem('jf3d_supabase_url') || DEFAULT_SUPABASE_URL;
     if (inputKey) inputKey.value = localStorage.getItem('jf3d_supabase_key') || DEFAULT_SUPABASE_KEY;
     if (btnDisconnect) btnDisconnect.style.display = supabaseClient ? 'block' : 'none';
-    
+
     modal.classList.add('active');
 };
 
-window.closeSupabaseModal = function() {
+window.closeSupabaseModal = function () {
     const modal = document.getElementById('modal-supabase-config');
     if (modal) modal.classList.remove('active');
 };
 
-window.saveSupabaseConfig = async function() {
+window.saveSupabaseConfig = async function () {
     let url = document.getElementById('supabase-url')?.value.trim();
     const key = document.getElementById('supabase-anon-key')?.value.trim();
-    
+
     if (!url || !key) {
         alert('Por favor, ingresa tanto la URL del Proyecto como la Anon Public Key de Supabase.');
         return;
     }
-    
+
     // Auto-clean URL
     url = url.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
-    
+
     localStorage.removeItem('jf3d_cloud_disabled');
     localStorage.setItem('jf3d_supabase_url', url);
     localStorage.setItem('jf3d_supabase_key', key);
-    
+
     closeSupabaseModal();
     showToast('Conectando a Supabase...');
     await initSupabase();
 };
 
-window.disconnectSupabase = function() {
+window.disconnectSupabase = function () {
     if (confirm('¿Deseas desconectar la base de datos en la nube y volver al Modo Local?')) {
         localStorage.setItem('jf3d_cloud_disabled', 'true');
         localStorage.removeItem('jf3d_supabase_url');
@@ -478,9 +487,9 @@ window.disconnectSupabase = function() {
     }
 };
 
-window.syncFromCloud = async function() {
+window.syncFromCloud = async function () {
     if (!supabaseClient) return;
-    
+
     updateCloudStatusBadge(false, 'Sincronizando...');
     try {
         const { data: cloudInv } = await supabaseClient.from('inventory').select('*');
@@ -489,17 +498,17 @@ window.syncFromCloud = async function() {
         try {
             const { data: dreqData } = await supabaseClient.from('design_requests').select('*');
             cloudDesignRequests = dreqData;
-        } catch (e) {}
+        } catch (e) { }
         const { data: cloudInternal } = await supabaseClient.from('internal_products').select('*');
         const { data: cloudPublic } = await supabaseClient.from('public_products').select('*');
         const { data: cloudSettings } = await supabaseClient.from('app_settings').select('*');
-        
-        const hasCloudData = (cloudInv && cloudInv.length > 0) || 
-                             (cloudOrders && cloudOrders.length > 0) || 
-                             (cloudDesignRequests && cloudDesignRequests.length > 0) ||
-                             (cloudInternal && cloudInternal.length > 0) ||
-                             (cloudPublic && cloudPublic.length > 0);
-        
+
+        const hasCloudData = (cloudInv && cloudInv.length > 0) ||
+            (cloudOrders && cloudOrders.length > 0) ||
+            (cloudDesignRequests && cloudDesignRequests.length > 0) ||
+            (cloudInternal && cloudInternal.length > 0) ||
+            (cloudPublic && cloudPublic.length > 0);
+
         if (hasCloudData) {
             if (cloudInv && cloudInv.length > 0) {
                 appState.inventory = cloudInv.map(r => ({
@@ -512,7 +521,7 @@ window.syncFromCloud = async function() {
                     remainingGrams: parseFloat(r.remaining_grams) || 1000
                 }));
             }
-            
+
             if (cloudOrders && cloudOrders.length > 0) {
                 appState.orders = cloudOrders.map(r => {
                     const productsList = Array.isArray(r.products) ? r.products.map(p => typeof p === 'object' && p !== null ? `${p.quantity > 1 ? p.quantity + 'x ' : ''}${p.title}` : p) : [];
@@ -556,7 +565,7 @@ window.syncFromCloud = async function() {
                     completedAt: r.completed_at || null
                 }));
             }
-            
+
             if (cloudInternal && cloudInternal.length > 0) {
                 appState.internalProducts = cloudInternal.map(r => ({
                     id: r.id,
@@ -579,7 +588,7 @@ window.syncFromCloud = async function() {
                     imageSrc: r.image_src || ''
                 }));
             }
-            
+
             if (cloudPublic && cloudPublic.length > 0) {
                 appState.products = cloudPublic.map(r => ({
                     id: r.id,
@@ -591,15 +600,23 @@ window.syncFromCloud = async function() {
                     imageSrc: r.image_src
                 }));
             }
-            
+
             if (cloudSettings && cloudSettings.length > 0) {
                 cloudSettings.forEach(s => {
                     if (s.key === 'costSettings') appState.costSettings = s.value;
                     if (s.key === 'appSettings') appState.settings = { ...appState.settings, ...s.value };
+                    if (s.key === 'whatsappSettings' && s.value) {
+                        appState.whatsappSettings = {
+                            ...appState.whatsappSettings,
+                            ...s.value
+                        };
+                        try { localStorage.setItem('jf3d_whatsapp_settings', JSON.stringify(appState.whatsappSettings)); } catch (e) { }
+                    }
                 });
             }
-            
+
             saveStateToStorage();
+            if (typeof updateWhatsAppStatusBadge === 'function') updateWhatsAppStatusBadge();
             syncCostInputsFromState();
             syncSidebarInputsFromState();
             updateFilamentDropdown();
@@ -610,7 +627,7 @@ window.syncFromCloud = async function() {
             renderProductCardsInEditor();
             updatePreviewAndStats();
             updateDashboardData();
-            
+
             updateCloudStatusBadge(true, 'Nube Conectada');
             showToast('¡Datos sincronizados exitosamente con Supabase!');
         } else {
@@ -624,7 +641,7 @@ window.syncFromCloud = async function() {
     }
 };
 
-window.pushAllToCloud = async function() {
+window.pushAllToCloud = async function () {
     if (!supabaseClient) return;
     try {
         if (appState.inventory && appState.inventory.length > 0) {
@@ -648,7 +665,7 @@ window.pushAllToCloud = async function() {
     }
 };
 
-window.pushInventoryToCloud = async function(spool) {
+window.pushInventoryToCloud = async function (spool) {
     if (!supabaseClient || !spool) return;
     try {
         await supabaseClient.from('inventory').upsert({
@@ -663,12 +680,12 @@ window.pushInventoryToCloud = async function(spool) {
     } catch (e) { console.error('Cloud inventory upsert failed:', e); }
 };
 
-window.deleteInventoryFromCloud = async function(id) {
+window.deleteInventoryFromCloud = async function (id) {
     if (!supabaseClient || !id) return;
-    try { await supabaseClient.from('inventory').delete().eq('id', id); } catch (e) {}
+    try { await supabaseClient.from('inventory').delete().eq('id', id); } catch (e) { }
 };
 
-window.pushOrderToCloud = async function(order) {
+window.pushOrderToCloud = async function (order) {
     if (!supabaseClient || !order) return;
     try {
         const payload = {
@@ -701,12 +718,12 @@ window.pushOrderToCloud = async function(order) {
     } catch (e) { console.error('Cloud order upsert failed:', e); }
 };
 
-window.deleteOrderFromCloud = async function(id) {
+window.deleteOrderFromCloud = async function (id) {
     if (!supabaseClient || !id) return;
-    try { await supabaseClient.from('orders').delete().eq('id', id); } catch (e) {}
+    try { await supabaseClient.from('orders').delete().eq('id', id); } catch (e) { }
 };
 
-window.pushDesignRequestToCloud = async function(req) {
+window.pushDesignRequestToCloud = async function (req) {
     if (!supabaseClient || !req) return;
     try {
         await supabaseClient.from('design_requests').upsert({
@@ -726,12 +743,12 @@ window.pushDesignRequestToCloud = async function(req) {
     }
 };
 
-window.deleteDesignRequestFromCloud = async function(id) {
+window.deleteDesignRequestFromCloud = async function (id) {
     if (!supabaseClient || !id) return;
-    try { await supabaseClient.from('design_requests').delete().eq('id', id); } catch (e) {}
+    try { await supabaseClient.from('design_requests').delete().eq('id', id); } catch (e) { }
 };
 
-window.pushInternalProductToCloud = async function(prod) {
+window.pushInternalProductToCloud = async function (prod) {
     if (!supabaseClient || !prod) return;
     try {
         await supabaseClient.from('internal_products').upsert({
@@ -757,12 +774,12 @@ window.pushInternalProductToCloud = async function(prod) {
     } catch (e) { console.error('Cloud internal product upsert failed:', e); }
 };
 
-window.deleteInternalProductFromCloud = async function(id) {
+window.deleteInternalProductFromCloud = async function (id) {
     if (!supabaseClient || !id) return;
-    try { await supabaseClient.from('internal_products').delete().eq('id', id); } catch (e) {}
+    try { await supabaseClient.from('internal_products').delete().eq('id', id); } catch (e) { }
 };
 
-window.pushPublicProductToCloud = async function(prod) {
+window.pushPublicProductToCloud = async function (prod) {
     if (!supabaseClient || !prod) return;
     try {
         await supabaseClient.from('public_products').upsert({
@@ -777,12 +794,12 @@ window.pushPublicProductToCloud = async function(prod) {
     } catch (e) { console.error('Cloud public product upsert failed:', e); }
 };
 
-window.deletePublicProductFromCloud = async function(id) {
+window.deletePublicProductFromCloud = async function (id) {
     if (!supabaseClient || !id) return;
-    try { await supabaseClient.from('public_products').delete().eq('id', id); } catch (e) {}
+    try { await supabaseClient.from('public_products').delete().eq('id', id); } catch (e) { }
 };
 
-window.pushSettingsToCloud = async function() {
+window.pushSettingsToCloud = async function () {
     if (!supabaseClient) return;
     try {
         if (appState.costSettings) {
@@ -799,13 +816,459 @@ window.pushSettingsToCloud = async function() {
                 updated_at: new Date().toISOString()
             });
         }
+        if (appState.whatsappSettings) {
+            await supabaseClient.from('app_settings').upsert({
+                key: 'whatsappSettings',
+                value: appState.whatsappSettings,
+                updated_at: new Date().toISOString()
+            });
+        }
     } catch (e) { console.error('Cloud settings upsert failed:', e); }
+};
+
+// --- WHATSAPP AUTOMATIC NOTIFICATIONS SERVICE (DIRECT ENGINE - 2 NUMBERS, NO API KEYS) ---
+let waEngineStatus = 'connecting'; // 'connecting' | 'qr' | 'connected' | 'disconnected'
+let waStatusPollTimer = null;
+
+function getWhatsAppSettings() {
+    if (!appState.whatsappSettings) {
+        try {
+            const cached = localStorage.getItem('jf3d_whatsapp_settings');
+            if (cached) {
+                appState.whatsappSettings = JSON.parse(cached);
+            }
+        } catch (e) { }
+    }
+    if (!appState.whatsappSettings || !Array.isArray(appState.whatsappSettings.recipients)) {
+        appState.whatsappSettings = {
+            notifyOnNewOrder: true,
+            notifyOnNewCost: true,
+            notifyOnDesignRequest: true,
+            recipients: [
+                { enabled: true, name: 'Principal', phone: '+5491166123434' },
+                { enabled: true, name: 'Destinatario 2', phone: '' }
+            ]
+        };
+    }
+    while (appState.whatsappSettings.recipients.length < 2) {
+        appState.whatsappSettings.recipients.push({
+            enabled: true,
+            name: `Destinatario ${appState.whatsappSettings.recipients.length + 1}`,
+            phone: ''
+        });
+    }
+    if (!appState.whatsappSettings.recipients[0].phone && !appState.whatsappSettings.recipients[1].phone) {
+        appState.whatsappSettings.recipients[0].phone = '+5491166123434';
+        if (!appState.whatsappSettings.recipients[0].name || appState.whatsappSettings.recipients[0].name === 'Destinatario 1') {
+            appState.whatsappSettings.recipients[0].name = 'Principal';
+        }
+    }
+    return appState.whatsappSettings;
+}
+
+window.fetchWhatsAppEngineStatus = async function () {
+    try {
+        const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        waEngineStatus = data.status || 'disconnected';
+
+        const loadingEl = document.getElementById('wa-engine-loading');
+        const qrBox = document.getElementById('wa-engine-qr-box');
+        const qrImg = document.getElementById('wa-engine-qr-img');
+        const connectedBox = document.getElementById('wa-engine-connected-box');
+        const connectedInfo = document.getElementById('wa-engine-connected-info');
+
+        if (data.status === 'connected') {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (qrBox) qrBox.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'flex';
+            if (connectedInfo) {
+                connectedInfo.textContent = data.userPhone
+                    ? `Cuenta emisora vinculada: +${data.userPhone} (${data.userName || 'WhatsApp'})`
+                    : 'Vinculado y listo para enviar en segundo plano';
+            }
+        } else if (data.status === 'qr' && data.qrDataUrl) {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (qrBox) qrBox.style.display = 'flex';
+            if (qrImg) qrImg.src = data.qrDataUrl;
+        } else {
+            if (qrBox) qrBox.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (loadingEl) {
+                loadingEl.style.display = 'block';
+                loadingEl.textContent = '⏳ Generando código QR de vinculación con WhatsApp...';
+            }
+        }
+
+        updateWhatsAppStatusBadge();
+        return data;
+    } catch (e) {
+        return null;
+    }
+};
+
+window.logoutWhatsAppEngine = async function () {
+    if (!confirm('¿Deseas desvincular la cuenta actual de WhatsApp y generar un nuevo código QR?')) return;
+    try {
+        await fetch('/api/whatsapp/logout', { method: 'POST' });
+        showToast('Sesión de WhatsApp reiniciada. Generando nuevo código QR...');
+        setTimeout(() => fetchWhatsAppEngineStatus(), 1200);
+    } catch (e) { }
+};
+
+window.updateWhatsAppStatusBadge = function () {
+    const wa = getWhatsAppSettings();
+    const activePhoneCount = (wa.recipients || []).filter(r => r.enabled && r.phone && r.phone.trim()).length;
+    const isConnected = waEngineStatus === 'connected' && activePhoneCount > 0;
+    const labelText = waEngineStatus === 'connected'
+        ? `WhatsApp Activo (${activePhoneCount})`
+        : 'Vincular WhatsApp';
+
+    document.querySelectorAll('.whatsapp-status-dot').forEach(dot => {
+        dot.className = 'whatsapp-status-dot cloud-status-dot ' + (isConnected ? 'connected' : 'offline');
+    });
+    document.querySelectorAll('.whatsapp-status-text').forEach(label => {
+        label.textContent = labelText;
+    });
+};
+
+window.openWhatsAppModal = function () {
+    const modal = document.getElementById('modal-whatsapp-config');
+    if (!modal) return;
+
+    const wa = getWhatsAppSettings();
+    const r1 = wa.recipients[0] || { enabled: true, name: 'Principal', phone: '+5491166123434' };
+    const r2 = wa.recipients[1] || { enabled: true, name: 'Destinatario 2', phone: '' };
+
+    const chkOrders = document.getElementById('wa-notify-orders');
+    const chkCosts = document.getElementById('wa-notify-costs');
+    const chkDreq = document.getElementById('wa-notify-dreq');
+    if (chkOrders) chkOrders.checked = wa.notifyOnNewOrder !== false;
+    if (chkCosts) chkCosts.checked = wa.notifyOnNewCost !== false;
+    if (chkDreq) chkDreq.checked = wa.notifyOnDesignRequest !== false;
+
+    const r1En = document.getElementById('wa-rec1-enabled');
+    const r1Name = document.getElementById('wa-rec1-name');
+    const r1Phone = document.getElementById('wa-rec1-phone');
+    if (r1En) r1En.checked = r1.enabled !== false;
+    if (r1Name) r1Name.value = r1.name || 'Principal';
+    if (r1Phone) r1Phone.value = r1.phone || '+5491166123434';
+
+    const r2En = document.getElementById('wa-rec2-enabled');
+    const r2Name = document.getElementById('wa-rec2-name');
+    const r2Phone = document.getElementById('wa-rec2-phone');
+    if (r2En) r2En.checked = r2.enabled !== false;
+    if (r2Name) r2Name.value = r2.name || '';
+    if (r2Phone) r2Phone.value = r2.phone || '';
+
+    const feedback = document.getElementById('wa-config-feedback');
+    if (feedback) feedback.textContent = '';
+
+    modal.classList.add('active');
+    fetchWhatsAppEngineStatus();
+
+    clearInterval(waStatusPollTimer);
+    waStatusPollTimer = setInterval(() => {
+        if (!modal.classList.contains('active')) {
+            clearInterval(waStatusPollTimer);
+            return;
+        }
+        fetchWhatsAppEngineStatus();
+    }, 2500);
+};
+
+window.closeWhatsAppModal = function () {
+    const modal = document.getElementById('modal-whatsapp-config');
+    if (modal) modal.classList.remove('active');
+    clearInterval(waStatusPollTimer);
+};
+
+function readWhatsAppModalInputs() {
+    return {
+        notifyOnNewOrder: document.getElementById('wa-notify-orders')?.checked !== false,
+        notifyOnNewCost: document.getElementById('wa-notify-costs')?.checked !== false,
+        notifyOnDesignRequest: document.getElementById('wa-notify-dreq')?.checked !== false,
+        recipients: [
+            {
+                enabled: document.getElementById('wa-rec1-enabled')?.checked !== false,
+                name: (document.getElementById('wa-rec1-name')?.value || 'Principal').trim(),
+                phone: cleanWhatsAppPhone((document.getElementById('wa-rec1-phone')?.value || '').trim())
+            },
+            {
+                enabled: document.getElementById('wa-rec2-enabled')?.checked !== false,
+                name: (document.getElementById('wa-rec2-name')?.value || 'Destinatario 2').trim(),
+                phone: cleanWhatsAppPhone((document.getElementById('wa-rec2-phone')?.value || '').trim())
+            }
+        ]
+    };
+}
+
+window.saveWhatsAppConfig = async function () {
+    const newConfig = readWhatsAppModalInputs();
+    appState.whatsappSettings = newConfig;
+    try {
+        localStorage.setItem('jf3d_whatsapp_settings', JSON.stringify(newConfig));
+    } catch (e) { }
+
+    saveStateToStorage();
+    updateWhatsAppStatusBadge();
+    closeWhatsAppModal();
+
+    const activeCount = newConfig.recipients.filter(r => r.enabled && r.phone).length;
+    showToast(`✅ Configuración guardada (${activeCount} número(s) de destino)`);
+};
+
+function cleanWhatsAppPhone(rawPhone) {
+    if (!rawPhone) return '';
+    let digits = rawPhone.replace(/[^0-9]/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) {
+        digits = '549' + digits;
+    } else if (digits.length === 11 && digits.startsWith('0')) {
+        digits = '549' + digits.substring(1);
+    } else if (digits.length === 12 && digits.startsWith('54') && !digits.startsWith('549')) {
+        digits = '549' + digits.substring(2);
+    }
+    return `+${digits}`;
+}
+
+window.testWhatsAppRecipient = async function (slotNumber) {
+    const currentInputs = readWhatsAppModalInputs();
+    const rec = currentInputs.recipients[slotNumber - 1];
+    const feedback = document.getElementById('wa-config-feedback');
+
+    if (!rec || !rec.phone) {
+        alert(`Por favor, ingresa primero el número de WhatsApp del Destinatario #${slotNumber} (ej. 1166123434).`);
+        return;
+    }
+
+    const phoneInputEl = document.getElementById(`wa-rec${slotNumber}-phone`);
+    if (phoneInputEl) phoneInputEl.value = rec.phone;
+
+    const testMessage = [
+        `✅ *PRUEBA DE ALERTA - JF 3D Studio*`,
+        `━━━━━━━━━━━━━━━━━━`,
+        `Hola *${rec.name || ('Destinatario #' + slotNumber)}*, el envío automático de alertas para *Pedidos Nuevos* y *Costos* ya está funcionando en segundo plano hacia tu número (${rec.phone}).`
+    ].join('\n');
+
+    if (feedback) {
+        feedback.style.color = '#25D366';
+        feedback.textContent = `⏳ Enviando mensaje en segundo plano a ${rec.phone}...`;
+    }
+
+    try {
+        const res = await fetch('/api/whatsapp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phones: [rec.phone], text: testMessage })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+            if (feedback) {
+                feedback.style.color = '#25D366';
+                feedback.textContent = `✅ ¡Mensaje enviado a ${rec.phone}! Revisa tu WhatsApp.`;
+            }
+            showToast(`📲 Mensaje enviado a ${rec.phone}`);
+        } else {
+            if (feedback) {
+                feedback.style.color = '#f59e0b';
+                feedback.textContent = `⚠️ ${data.error || 'Escanea primero el código QR de arriba para vincular el motor.'}`;
+            }
+            fetchWhatsAppEngineStatus();
+        }
+    } catch (err) {
+        if (feedback) {
+            feedback.style.color = 'var(--danger)';
+            feedback.textContent = `❌ Error al comunicarse con el servidor local.`;
+        }
+    }
+};
+
+window.sendWhatsAppNotificationToRecipients = async function (messageText, options = {}) {
+    const wa = getWhatsAppSettings();
+    const activePhones = (wa.recipients || [])
+        .filter(r => r.enabled && r.phone && r.phone.trim())
+        .map(r => cleanWhatsAppPhone(r.phone))
+        .filter(Boolean);
+
+    if (activePhones.length === 0) return false;
+
+    try {
+        const res = await fetch('/api/whatsapp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phones: activePhones, text: messageText })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+            if (!options.silentToast) {
+                showToast(`📲 WhatsApp enviado automáticamente a ${data.sent.length} número(s)`);
+            }
+            return true;
+        }
+
+        if (data && data.needsQr) {
+            showToast(`📱 Escanea el QR por única vez para activar el envío automático de WhatsApp`);
+            openWhatsAppModal();
+            return false;
+        }
+    } catch (err) {
+        console.warn('Error enviando WhatsApp en segundo plano:', err);
+    }
+
+    return false;
+};
+
+setTimeout(() => {
+    if (typeof fetchWhatsAppEngineStatus === 'function') fetchWhatsAppEngineStatus();
+}, 1000);
+
+function formatDateDisplay(rawDate) {
+    if (!rawDate) return 'Sin fecha';
+    const parts = String(rawDate).split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return rawDate;
+}
+
+function buildOrderWhatsAppMessage(order) {
+    const productsList = Array.isArray(order.products) ? order.products.join(', ') : (order.products || 'Sin especificar');
+    const qty = Number(order.quantity || 1);
+    const finalPrice = Number(order.finalPrice !== undefined ? order.finalPrice : (order.totalPrice || 0));
+    const orderDateStr = formatDateDisplay(order.orderDate || order.date);
+    const deliveryDateStr = formatDateDisplay(order.deliveryDate || order.date);
+
+    return [
+        `📦 *NUEVO PEDIDO - JF 3D Studio*`,
+        `━━━━━━━━━━━━━━━━━━`,
+        `👤 *Cliente:* ${order.clientName}`,
+        `📋 *Productos:* ${productsList}`,
+        `🔢 *Cantidad Total:* ${qty} u.`,
+        `💰 *Valor a Cobrar:* $ ${finalPrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        `💳 *Estado Pago:* ${order.payment || 'Pendiente'}`,
+        `🖨️ *Estado:* ${order.status || 'En Cola'}`,
+        `📅 *Fecha Pedido:* ${orderDateStr}`,
+        `🚚 *Entrega Prometida:* ${deliveryDateStr}`
+    ].join('\n');
+}
+
+function buildCostWhatsAppMessage(prod, isUpdate = false) {
+    let spoolName = 'Bobina General';
+    if (prod.spoolId && prod.spoolId !== 'default_12000_1000') {
+        const spool = (appState.inventory || []).find(s => s.id === prod.spoolId);
+        if (spool) spoolName = `${spool.brand} ${spool.material} (${spool.color})`;
+    }
+    const weight = Number(prod.weightGrams || 0);
+    const hours = Number(prod.hours || 0);
+    const netCost = Number(prod.netCost || 0);
+    const markup = Number(prod.markupPercent || 0);
+    const suggested = Number(prod.suggestedPrice || 0);
+
+    return [
+        `🧮 *${isUpdate ? 'COSTO ACTUALIZADO' : 'NUEVO COSTO CALCULADO'} - JF 3D Studio*`,
+        `━━━━━━━━━━━━━━━━━━`,
+        `🏷️ *Producto:* ${prod.title || 'Cotización Rápida'}`,
+        `⚖️ *Peso:* ${weight.toFixed(0)} g | ⏱️ *Tiempo:* ${hours.toFixed(1)} hs`,
+        `🧵 *Filamento:* ${spoolName}`,
+        `📊 *Costo Neto Fab.:* $ ${netCost.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        `📈 *Margen Ganancia:* ${markup}%`,
+        `✅ *PRECIO SUGERIDO:* $ ${suggested.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    ].join('\n');
+}
+
+window.notifyNewOrderWhatsApp = function (order) {
+    const wa = getWhatsAppSettings();
+    if (wa.notifyOnNewOrder === false) return;
+    const msg = buildOrderWhatsAppMessage(order);
+    sendWhatsAppNotificationToRecipients(msg);
+};
+
+window.notifyNewCostWhatsApp = function (prod, isUpdate = false) {
+    const wa = getWhatsAppSettings();
+    if (wa.notifyOnNewCost === false) return;
+    const msg = buildCostWhatsAppMessage(prod, isUpdate);
+    sendWhatsAppNotificationToRecipients(msg);
+};
+
+window.notifyNewDesignRequestWhatsApp = function (req) {
+    const wa = getWhatsAppSettings();
+    if (wa.notifyOnDesignRequest === false) return;
+    const msg = [
+        `🎨 *NUEVA SOLICITUD DE DISEÑO Y COSTEO*`,
+        `━━━━━━━━━━━━━━━━━━`,
+        `🏷️ *Modelo:* ${req.title}`,
+        req.client ? `👤 *Cliente:* ${req.client}` : null,
+        req.description ? `📝 *Notas:* ${req.description}` : null,
+        `📅 *Fecha:* ${formatDateDisplay(req.date || req.createdAt)}`
+    ].filter(Boolean).join('\n');
+    sendWhatsAppNotificationToRecipients(msg);
+};
+
+window.notifyCurrentCalculationWhatsApp = function () {
+    const name = (document.getElementById('calc-prod-name')?.value || '').trim() || 'Cotización Rápida en Calculadora';
+    const select = document.getElementById('calc-filament');
+    const selectedId = select ? select.value : '';
+    let spoolCost = 12000;
+    let spoolWeight = 1000;
+
+    if (selectedId && selectedId !== 'default_12000_1000') {
+        const spool = (appState.inventory || []).find(s => s.id === selectedId);
+        if (spool) {
+            spoolCost = spool.cost;
+            spoolWeight = spool.weightGrams;
+        }
+    }
+
+    const weight = parseFloat(document.getElementById('calc-weight')?.value) || 0;
+    const hours = parseFloat(document.getElementById('calc-hours')?.value) || 0;
+    const errorPercent = parseFloat(document.getElementById('calc-error-margin')?.value) || 0;
+    const markup = parseFloat(document.getElementById('calc-markup')?.value) || 0;
+    const electricityRate = parseFloat(document.getElementById('calc-electricity')?.value) || 0;
+    const depreciationRate = parseFloat(document.getElementById('calc-depreciation')?.value) || 0;
+
+    const materialCost = weight * (spoolCost / spoolWeight);
+    const errorMarginCost = materialCost * (errorPercent / 100);
+    const electricityCost = hours * electricityRate;
+    const depreciationCost = hours * depreciationRate;
+    const netCost = materialCost + errorMarginCost + electricityCost + depreciationCost;
+    const profitCost = netCost * (markup / 100);
+    const suggestedPrice = netCost + profitCost;
+
+    const msg = buildCostWhatsAppMessage({
+        title: name,
+        weightGrams: weight,
+        hours: hours,
+        spoolId: selectedId,
+        netCost: netCost,
+        markupPercent: markup,
+        suggestedPrice: suggestedPrice
+    });
+
+    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
+};
+
+window.shareOrderWhatsApp = function (orderId) {
+    const order = (appState.orders || []).find(o => o.id === orderId);
+    if (!order) return;
+    const msg = buildOrderWhatsAppMessage(order);
+    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
+};
+
+window.shareInternalProductWhatsApp = function (prodId) {
+    const prod = (appState.internalProducts || []).find(p => p.id === prodId);
+    if (!prod) return;
+    const msg = buildCostWhatsAppMessage(prod, false);
+    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
 };
 
 // --- INITIALIZE APPLICATION ---
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    
+    if (typeof updateWhatsAppStatusBadge === 'function') updateWhatsAppStatusBadge();
+
     // Load state asynchronously from IndexedDB
     getDB().then(db => {
         const transaction = db.transaction(STORE_NAME, 'readonly');
@@ -823,6 +1286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     inventory: savedState.inventory || [],
                     internalProducts: savedState.internalProducts || [],
                     imagePool: savedState.imagePool || [],
+                    whatsappSettings: savedState.whatsappSettings || appState.whatsappSettings,
                     costSettings: savedState.costSettings || {
                         electricityRate: 15,
                         depreciationRate: 25,
@@ -835,28 +1299,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...savedState.settings
                     }
                 };
-                
+
+                if (typeof updateWhatsAppStatusBadge === 'function') updateWhatsAppStatusBadge();
                 syncCostInputsFromState();
-                
+
                 // Apply visual catalog styles
                 if (appState.settings.accentColor) document.documentElement.style.setProperty('--catalog-accent', appState.settings.accentColor);
                 if (appState.settings.textColor) document.documentElement.style.setProperty('--catalog-text', appState.settings.textColor);
                 if (appState.settings.bgColor) document.documentElement.style.setProperty('--catalog-bg', appState.settings.bgColor);
-                
+
                 // Synchronize sidebar form values
                 syncSidebarInputsFromState();
-                
+
                 // Render editor list and sheets preview
                 renderProductCardsInEditor();
                 renderCatalogSheets();
-                
+
                 // Display active sidebar workspace
                 elements.panelSetup.style.display = 'none';
                 elements.sidebar.style.display = 'flex';
-                
+
                 // Switch to default start page
                 switchModule('dashboard');
-                
+
                 // Reveal tabs and statistics
                 const navTabs = document.getElementById('nav-tabs');
                 const statsView = document.getElementById('stats-view');
@@ -866,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadSampleDataIfEmpty();
                 switchModule('dashboard');
             }
-            
+
             // Connect to Supabase in cloud if credentials are saved
             initSupabase();
         };
@@ -918,21 +1383,21 @@ function setupEventListeners() {
     bindSettingsInput(elements.inputAccentColor, 'accentColor', true);
     bindSettingsInput(elements.inputTextColor, 'textColor', true);
     bindSettingsInput(elements.inputBgColor, 'bgColor', true);
-    
+
     if (elements.inputProductsPerPage) {
         elements.inputProductsPerPage.addEventListener('change', (e) => {
             appState.settings.productsPerPage = parseInt(e.target.value) || 4;
             updatePreviewAndStats();
         });
     }
-    
+
     if (elements.checkboxShowCover) {
         elements.checkboxShowCover.addEventListener('change', (e) => {
             appState.settings.showCover = e.target.checked;
             updatePreviewAndStats();
         });
     }
-    
+
     if (elements.checkboxShowBack) {
         elements.checkboxShowBack.addEventListener('change', (e) => {
             appState.settings.showBack = e.target.checked;
@@ -994,10 +1459,10 @@ function setupEventListeners() {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
-            
+
             const theme = e.currentTarget.dataset.theme;
             appState.settings.theme = theme;
-            
+
             // Adjust default products-per-page based on theme for optical density
             if (theme === 'luxury') {
                 appState.settings.productsPerPage = 2;
@@ -1006,11 +1471,11 @@ function setupEventListeners() {
             } else {
                 appState.settings.productsPerPage = 4;
             }
-            
+
             if (elements.inputProductsPerPage) {
                 elements.inputProductsPerPage.value = appState.settings.productsPerPage;
             }
-            
+
             updatePreviewAndStats();
         });
     });
@@ -1082,38 +1547,38 @@ function processDocxFile(file) {
     showLoading('Leyendo archivo de Word...');
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         const arrayBuffer = event.target.result;
-        
+
         showLoading('Convirtiendo contenido del documento...');
-        
+
         // Use Mammoth.js to convert docx to clean HTML
         mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
             .then(result => {
                 const htmlContent = result.value;
                 const messages = result.messages;
-                
+
                 if (messages.length > 0) {
                     console.log('Mammoth messages:', messages);
                 }
-                
+
                 showLoading('Extrayendo productos e imágenes...');
-                
+
                 // Store raw HTML in the preview tab
                 if (elements.rawContent) {
                     elements.rawContent.innerHTML = htmlContent;
                 }
-                
+
                 // Parse products from Mammoth HTML
                 parseProductsFromHtml(htmlContent);
-                
+
                 hideLoading();
-                
+
                 // Transition layout
                 elements.panelSetup.style.display = 'none';
                 elements.sidebar.style.display = 'flex';
                 switchTab('preview'); // Open preview tab first to show results
-                
+
                 // Explicitly show navigation tabs and stats
                 const navTabs = document.getElementById('nav-tabs');
                 const statsView = document.getElementById('stats-view');
@@ -1126,12 +1591,12 @@ function processDocxFile(file) {
                 alert('Error al convertir el archivo: ' + err.message);
             });
     };
-    
-    reader.onerror = function() {
+
+    reader.onerror = function () {
         hideLoading();
         alert('Error al leer el archivo físico.');
     };
-    
+
     reader.readAsArrayBuffer(file);
 }
 
@@ -1139,10 +1604,10 @@ function processDocxFile(file) {
 function parseProductsFromHtml(htmlString) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlString;
-    
+
     let detectedProducts = [];
     let extractedImages = [];
-    
+
     // 1. Gather all base64 images from the document first to populate the image pool
     const docImages = tempDiv.querySelectorAll('img');
     docImages.forEach((img, idx) => {
@@ -1153,9 +1618,9 @@ function parseProductsFromHtml(htmlString) {
             });
         }
     });
-    
+
     appState.imagePool = extractedImages;
-    
+
     // Set default Cover Image if we found any images
     if (extractedImages.length > 0) {
         appState.settings.coverImg = extractedImages[0].src;
@@ -1165,30 +1630,30 @@ function parseProductsFromHtml(htmlString) {
     const tables = tempDiv.querySelectorAll('table');
     if (tables.length > 0) {
         console.log(`Found ${tables.length} tables. Attempting structured parsing...`);
-        
+
         tables.forEach((table, tableIdx) => {
             const rows = table.querySelectorAll('tr');
-            
+
             rows.forEach((row, rowIdx) => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length === 0) return;
-                
+
                 // Check if row contains cell with image and cell with text
                 let cellImage = null;
                 let cellTextChunks = [];
                 let cellPrices = [];
-                
+
                 cells.forEach(cell => {
                     const img = cell.querySelector('img');
                     if (img && img.src && img.src.startsWith('data:')) {
                         cellImage = img.src;
                     }
-                    
+
                     const text = cell.innerText || cell.textContent || '';
                     const cleanText = text.trim();
                     if (cleanText) {
                         cellTextChunks.push(cleanText);
-                        
+
                         // Heuristic for finding prices inside cell text
                         const priceRegex = /(?:\$|usd|usd\s*|\$\s*)\s*(\d+(?:[\.,]\d+)*)/gi;
                         let match;
@@ -1197,36 +1662,36 @@ function parseProductsFromHtml(htmlString) {
                         }
                     }
                 });
-                
+
                 // If this row has content (either text & image, or text & price)
                 if (cellTextChunks.length > 0) {
                     // Try to compile a candidate product
                     let fullText = cellTextChunks.join('\n');
                     let lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                    
+
                     if (lines.length > 0) {
                         let title = lines[0];
                         // Remove price from title if it got caught there
                         if (cellPrices.length > 0) {
                             title = title.replace(cellPrices[0], '').trim();
                         }
-                        
+
                         let price = cellPrices.length > 0 ? cellPrices[0] : "";
                         let description = lines.slice(1).join(', ');
-                        
+
                         // Clean up description if price is in it
                         if (price && description.includes(price)) {
                             description = description.replace(price, '').replace(/,\s*,/g, ',').trim();
                         }
-                        
+
                         // Limit description length if too long
                         if (description.length > 150) {
                             description = description.substring(0, 147) + '...';
                         }
-                        
+
                         // Avoid duplicates or parsing header columns (like "Imagen", "Nombre", "Precio")
                         const isHeader = /nombre|producto|precio|descripción|imagen/i.test(title);
-                        
+
                         if (!isHeader && (title.length > 2 || cellImage)) {
                             detectedProducts.push({
                                 id: `prod_${tableIdx}_${rowIdx}`,
@@ -1247,34 +1712,34 @@ function parseProductsFromHtml(htmlString) {
     if (detectedProducts.length < 3) {
         console.log("Tables did not provide enough data. Parsing paragraphs sequentially...");
         detectedProducts = []; // Reset table results to avoid duplicates
-        
+
         let currentItem = { title: '', description: '', price: '', imageSrc: '', category: 'General' };
         let index = 0;
-        
+
         // Scan elements of the div
         const children = Array.from(tempDiv.children);
         children.forEach(el => {
             const tagName = el.tagName.toLowerCase();
             const text = (el.textContent || el.innerText || '').trim();
-            
+
             // Check for images
             const img = el.querySelector('img') || (tagName === 'img' ? el : null);
             if (img && img.src && img.src.startsWith('data:')) {
                 if (currentItem.title || currentItem.imageSrc) {
                     currentItem.id = `prod_seq_${index++}`;
-                    detectedProducts.push({...currentItem});
+                    detectedProducts.push({ ...currentItem });
                     currentItem = { title: '', description: '', price: '', imageSrc: '', category: 'General' };
                 }
                 currentItem.imageSrc = img.src;
                 return;
             }
-            
+
             if (!text) return;
-            
+
             // Heuristic for finding prices
             const priceRegex = /(?:\$|usd|usd\s*|\$\s*)\s*(\d+(?:[\.,]\d+)*)/i;
             const priceMatch = text.match(priceRegex);
-            
+
             if (priceMatch) {
                 currentItem.price = priceMatch[0];
                 let remainingText = text.replace(priceMatch[0], '').trim();
@@ -1289,7 +1754,7 @@ function parseProductsFromHtml(htmlString) {
                 // Headers are treated as brand new product titles
                 if (currentItem.title || currentItem.imageSrc) {
                     currentItem.id = `prod_seq_${index++}`;
-                    detectedProducts.push({...currentItem});
+                    detectedProducts.push({ ...currentItem });
                     currentItem = { title: '', description: '', price: '', imageSrc: '', category: 'General' };
                 }
                 currentItem.title = text;
@@ -1305,29 +1770,29 @@ function parseProductsFromHtml(htmlString) {
                     currentItem.description = (currentItem.description ? currentItem.description + " " : "") + text;
                 }
             }
-            
+
             if (currentItem.description && currentItem.description.length > 200) {
                 currentItem.description = currentItem.description.substring(0, 197) + '...';
             }
-            
+
             // Auto commit if we have Title, Description, and Price
             if (currentItem.title && currentItem.price && currentItem.imageSrc) {
                 currentItem.id = `prod_seq_${index++}`;
-                detectedProducts.push({...currentItem});
+                detectedProducts.push({ ...currentItem });
                 currentItem = { title: '', description: '', price: '', imageSrc: '', category: 'General' };
             }
         });
-        
+
         // Push last item if outstanding
         if (currentItem.title || currentItem.imageSrc) {
             currentItem.id = `prod_seq_${index++}`;
-            detectedProducts.push({...currentItem});
+            detectedProducts.push({ ...currentItem });
         }
     }
 
     // Clean up empty cards or bad items
     detectedProducts = detectedProducts.filter(p => p.title.length > 0 || p.imageSrc.length > 0);
-    
+
     // Assign images to imageless products from the pool if available
     detectedProducts.forEach((prod, i) => {
         if (!prod.imageSrc && appState.imagePool.length > 0) {
@@ -1338,7 +1803,7 @@ function parseProductsFromHtml(htmlString) {
     });
 
     appState.products = detectedProducts;
-    
+
     // Populate UI
     renderProductCardsInEditor();
     updatePreviewAndStats();
@@ -1347,14 +1812,14 @@ function parseProductsFromHtml(htmlString) {
 // --- SWITCH VISUAL TABS (Within Catalog Creator Section) ---
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    
+
     const activeBtn = document.getElementById(`tab-${tabName}`);
     if (activeBtn) activeBtn.classList.add('active');
-    
+
     elements.panelEditor.classList.remove('active');
     elements.panelPreview.classList.remove('active');
     elements.panelRaw.classList.remove('active');
-    
+
     if (tabName === 'editor') elements.panelEditor.classList.add('active');
     if (tabName === 'preview') elements.panelPreview.classList.add('active');
     if (tabName === 'raw') elements.panelRaw.classList.add('active');
@@ -1364,17 +1829,17 @@ function switchTab(tabName) {
 function renderProductCardsInEditor() {
     if (!elements.productGrid) return;
     elements.productGrid.innerHTML = '';
-    
+
     if (appState.products.length === 0) {
         elements.productGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">No hay productos en tu catálogo digital. Añade uno nuevo, publica uno calculado o carga un documento de Word.</div>';
         return;
     }
-    
+
     appState.products.forEach((prod) => {
         const card = document.createElement('div');
         card.className = 'product-card animate-fade';
         card.dataset.id = prod.id;
-        
+
         let imgContent = `
             <div class="product-card-img-placeholder">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -1383,11 +1848,11 @@ function renderProductCardsInEditor() {
                 <span>Añadir Imagen</span>
             </div>
         `;
-        
+
         if (prod.imageSrc) {
             imgContent = `<img src="${prod.imageSrc}" alt="${prod.title}">`;
         }
-        
+
         card.innerHTML = `
             <button class="product-card-delete" onclick="deleteProduct('${prod.id}')" title="Eliminar Producto">×</button>
             <div class="product-card-img-container" onclick="openImageSelector('${prod.id}')">
@@ -1415,13 +1880,13 @@ function renderProductCardsInEditor() {
                 </div>
             </div>
         `;
-        
+
         elements.productGrid.appendChild(card);
     });
 }
 
 // Update single field of product in state and preview
-window.updateProductField = function(id, field, value) {
+window.updateProductField = function (id, field, value) {
     const prod = appState.products.find(p => p.id === id);
     if (prod) {
         prod[field] = value;
@@ -1431,7 +1896,7 @@ window.updateProductField = function(id, field, value) {
 };
 
 // Delete product card
-window.deleteProduct = function(id) {
+window.deleteProduct = function (id) {
     appState.products = appState.products.filter(p => p.id !== id);
     renderProductCardsInEditor();
     updatePreviewAndStats();
@@ -1449,14 +1914,14 @@ function addNewProduct() {
         category: "Impresión",
         imageSrc: appState.imagePool.length > 0 ? appState.imagePool[0].src : ""
     };
-    
+
     appState.products.push(newProd);
     renderProductCardsInEditor();
     updatePreviewAndStats();
     if (typeof pushPublicProductToCloud === 'function') pushPublicProductToCloud(newProd);
-    
+
     switchTab('editor');
-    
+
     setTimeout(() => {
         const cards = elements.productGrid.querySelectorAll('.product-card');
         if (cards.length > 0) {
@@ -1466,12 +1931,12 @@ function addNewProduct() {
 }
 
 // --- IMAGE POOL SELECTOR FOR PRODUCTS ---
-window.openImageSelector = function(productId) {
+window.openImageSelector = function (productId) {
     appState.selectedProductForImgChange = productId;
-    
+
     if (!elements.imagePoolGrid) return;
     elements.imagePoolGrid.innerHTML = '';
-    
+
     if (appState.imagePool.length === 0) {
         elements.imagePoolGrid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
@@ -1484,14 +1949,14 @@ window.openImageSelector = function(productId) {
         appState.imagePool.forEach(img => {
             const item = document.createElement('div');
             item.className = 'pool-img-item';
-            
+
             // Check selections (both public and internal catalog image targets are supported)
             const activeProduct = appState.products.find(p => p.id === productId) || (appState.internalProducts && appState.internalProducts.find(p => p.id === productId));
             const isSelected = productId === 'COVER' ? (appState.settings.coverImg === img.src) : (activeProduct && activeProduct.imageSrc === img.src);
             if (isSelected) {
                 item.classList.add('selected');
             }
-            
+
             item.innerHTML = `<img src="${img.src}">`;
             item.addEventListener('click', () => selectImageFromPool(img.src));
             elements.imagePoolGrid.appendChild(item);
@@ -1507,7 +1972,7 @@ window.openImageSelector = function(productId) {
     uploadItem.style.gap = '4px';
     uploadItem.style.fontSize = '10px';
     uploadItem.style.color = 'var(--text-secondary)';
-    
+
     uploadItem.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -1515,11 +1980,11 @@ window.openImageSelector = function(productId) {
         <span>Subir</span>
         <input type="file" id="modal-img-upload" accept="image/*" style="display:none">
     `;
-    
+
     uploadItem.addEventListener('click', () => {
         uploadItem.querySelector('input').click();
     });
-    
+
     uploadItem.querySelector('input').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -1569,12 +2034,12 @@ function selectImageFromPool(imgSrc) {
 function renderCatalogSheets() {
     if (!elements.previewSheets) return;
     elements.previewSheets.innerHTML = '';
-    
+
     const sets = appState.settings;
     const itemsPerPage = sets.productsPerPage;
-    
+
     let totalSheets = 0;
-    
+
     // 1. Cover Page
     if (sets.showCover) {
         totalSheets++;
@@ -1583,12 +2048,12 @@ function renderCatalogSheets() {
         coverSheet.style.setProperty('--catalog-accent', sets.accentColor || '#4f46e5');
         coverSheet.style.setProperty('--catalog-text', sets.textColor || '#1f2937');
         coverSheet.style.setProperty('--catalog-bg', sets.bgColor || '#ffffff');
-        
+
         let coverImgHtml = '';
         if (sets.coverImg) {
             coverImgHtml = `<div class="cover-img-wrapper"><img src="${sets.coverImg}" alt="Cover Image"></div>`;
         }
-        
+
         coverSheet.innerHTML = `
             <div class="cover-page">
                 <div style="height: 10mm;"></div>
@@ -1604,13 +2069,13 @@ function renderCatalogSheets() {
                 </div>
             </div>
         `;
-        
+
         elements.previewSheets.appendChild(coverSheet);
     }
-    
+
     // 2. Product Pages
     const productChunks = chunkArray(appState.products, itemsPerPage);
-    
+
     productChunks.forEach((chunk) => {
         totalSheets++;
         const sheet = document.createElement('div');
@@ -1618,16 +2083,16 @@ function renderCatalogSheets() {
         sheet.style.setProperty('--catalog-accent', sets.accentColor || '#4f46e5');
         sheet.style.setProperty('--catalog-text', sets.textColor || '#1f2937');
         sheet.style.setProperty('--catalog-bg', sets.bgColor || '#ffffff');
-        
+
         let gridClass = 'grid-modern';
         if (sets.theme === 'luxury') gridClass = 'grid-luxury';
         if (sets.theme === 'industrial') gridClass = 'grid-industrial';
-        
+
         let logoHeaderHtml = sets.brandName;
         if (sets.logoImg) {
             logoHeaderHtml = `<img src="${sets.logoImg}" class="header-logo" alt="Logo">`;
         }
-        
+
         let productsHtml = '';
         chunk.forEach(prod => {
             let imgBoxHtml = '';
@@ -1636,7 +2101,7 @@ function renderCatalogSheets() {
             } else {
                 imgBoxHtml = `<div class="prod-img-box"><div style="color:#d1d5db;font-size:10px;">Sin Imagen</div></div>`;
             }
-            
+
             if (sets.theme === 'luxury') {
                 productsHtml += `
                     <div class="prod-item">
@@ -1661,7 +2126,7 @@ function renderCatalogSheets() {
                 `;
             }
         });
-        
+
         sheet.innerHTML = `
             <div class="catalog-header">
                 <div class="header-brand">
@@ -1679,10 +2144,10 @@ function renderCatalogSheets() {
                 <div>Página ${totalSheets}</div>
             </div>
         `;
-        
+
         elements.previewSheets.appendChild(sheet);
     });
-    
+
     // 3. Back Page
     if (sets.showBack) {
         totalSheets++;
@@ -1691,7 +2156,7 @@ function renderCatalogSheets() {
         backSheet.style.setProperty('--catalog-accent', sets.accentColor || '#4f46e5');
         backSheet.style.setProperty('--catalog-text', sets.textColor || '#1f2937');
         backSheet.style.setProperty('--catalog-bg', sets.bgColor || '#ffffff');
-        
+
         let contactDetailsHtml = `
             <div style="font-size:13px; color:#4b5563; line-height:2; margin-top:20px;">
                 <strong>Branding &amp; Contacto</strong><br>
@@ -1699,7 +2164,7 @@ function renderCatalogSheets() {
                 ${sets.brandContact.replace(/\|/g, '<br>')}
             </div>
         `;
-        
+
         backSheet.innerHTML = `
             <div class="back-page">
                 <div class="back-top">
@@ -1726,10 +2191,10 @@ function renderCatalogSheets() {
                 </div>
             </div>
         `;
-        
+
         elements.previewSheets.appendChild(backSheet);
     }
-    
+
     if (elements.statProducts) elements.statProducts.textContent = appState.products.length;
     if (elements.statPages) elements.statPages.textContent = totalSheets;
 }
@@ -1769,20 +2234,20 @@ function resetToSetupState() {
     appState.imagePool = [];
     appState.settings.logoImg = "";
     appState.settings.coverImg = "";
-    
+
     clearStorage();
-    
+
     if (elements.logoUpload) elements.logoUpload.value = '';
     if (elements.coverUpload) elements.coverUpload.value = '';
-    
+
     elements.sidebar.style.display = 'none';
     elements.panelSetup.style.display = 'flex';
-    
+
     const navTabs = document.getElementById('nav-tabs');
     const statsView = document.getElementById('stats-view');
     if (navTabs) { navTabs.style.opacity = '0'; navTabs.style.pointerEvents = 'none'; }
     if (statsView) { statsView.style.opacity = '0'; statsView.style.pointerEvents = 'none'; }
-    
+
     elements.productGrid.innerHTML = '';
     elements.previewSheets.innerHTML = '';
     elements.rawContent.innerHTML = '';
@@ -1906,7 +2371,7 @@ function syncSidebarInputsFromState() {
     if (elements.inputProductsPerPage) elements.inputProductsPerPage.value = sets.productsPerPage || 4;
     if (elements.checkboxShowCover) elements.checkboxShowCover.checked = sets.showCover !== false;
     if (elements.checkboxShowBack) elements.checkboxShowBack.checked = sets.showBack !== false;
-    
+
     document.querySelectorAll('.theme-btn').forEach(btn => {
         if (btn.dataset.theme === sets.theme) {
             btn.classList.add('active');
@@ -1914,7 +2379,7 @@ function syncSidebarInputsFromState() {
             btn.classList.remove('active');
         }
     });
-    
+
     document.querySelectorAll('[data-margin]').forEach(btn => {
         if (btn.dataset.margin === sets.margins) {
             btn.classList.add('active');
@@ -1925,7 +2390,7 @@ function syncSidebarInputsFromState() {
 }
 
 // --- GLOBAL MULTI-MODULE NAVIGATOR (SPA ROUTING) ---
-window.switchModule = function(moduleName) {
+window.switchModule = function (moduleName) {
     // Update desktop sidebar buttons
     document.querySelectorAll('.system-sidebar .nav-item').forEach(btn => {
         btn.classList.remove('active');
@@ -1953,7 +2418,7 @@ window.switchModule = function(moduleName) {
         };
         mobileSectionBadge.textContent = sectionLabels[moduleName] || moduleName;
     }
-    
+
     // Switch active view
     document.querySelectorAll('.module-view').forEach(view => {
         view.classList.remove('active');
@@ -1965,7 +2430,7 @@ window.switchModule = function(moduleName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const content = document.querySelector('.system-content');
     if (content) content.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     // Initialize module data or updates
     if (moduleName === 'catalog') {
         updatePreviewAndStats();
@@ -1985,7 +2450,7 @@ window.switchModule = function(moduleName) {
     }
 };
 
-window.switchCatalogMobileTab = function(tabName) {
+window.switchCatalogMobileTab = function (tabName) {
     const viewCatalog = document.getElementById('view-catalog');
     const btnEditor = document.getElementById('btn-cat-mob-editor');
     const btnPreview = document.getElementById('btn-cat-mob-preview');
@@ -2008,23 +2473,23 @@ window.switchCatalogMobileTab = function(tabName) {
 };
 
 // --- INVENTORY (FILAMENT) MANAGEMENT LOGIC ---
-window.openAddFilamentModal = function() {
+window.openAddFilamentModal = function () {
     const modal = document.getElementById('modal-add-filament');
     if (modal) modal.classList.add('active');
 };
 
-window.closeAddFilamentModal = function() {
+window.closeAddFilamentModal = function () {
     const modal = document.getElementById('modal-add-filament');
     if (modal) modal.classList.remove('active');
 };
 
-window.saveNewFilamentSpool = function() {
+window.saveNewFilamentSpool = function () {
     const brand = document.getElementById('fil-brand').value.trim() || 'Grilon3';
     const material = document.getElementById('fil-material').value;
     const color = document.getElementById('fil-color').value.trim() || 'Natural';
     const cost = parseFloat(document.getElementById('fil-cost').value) || 12000;
     const weightGrams = parseFloat(document.getElementById('fil-weight').value) || 1000;
-    
+
     const spool = {
         id: `spool_${Date.now()}`,
         brand,
@@ -2034,10 +2499,10 @@ window.saveNewFilamentSpool = function() {
         weightGrams,
         remainingGrams: weightGrams
     };
-    
+
     if (!appState.inventory) appState.inventory = [];
     appState.inventory.push(spool);
-    
+
     saveStateToStorage();
     renderInventoryGrid();
     updateFilamentDropdown();
@@ -2045,7 +2510,7 @@ window.saveNewFilamentSpool = function() {
     updateDashboardData();
     closeAddFilamentModal();
     if (typeof pushInventoryToCloud === 'function') pushInventoryToCloud(spool);
-    
+
     // Reset form fields
     document.getElementById('fil-brand').value = '';
     document.getElementById('fil-color').value = '';
@@ -2053,11 +2518,11 @@ window.saveNewFilamentSpool = function() {
     document.getElementById('fil-weight').value = 1000;
 };
 
-window.renderInventoryGrid = function() {
+window.renderInventoryGrid = function () {
     const grid = document.getElementById('inventory-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    
+
     if (!appState.inventory || appState.inventory.length === 0) {
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-secondary);">
@@ -2066,17 +2531,17 @@ window.renderInventoryGrid = function() {
         `;
         return;
     }
-    
+
     appState.inventory.forEach(spool => {
         const percentage = Math.max(0, Math.min(100, (spool.remainingGrams / spool.weightGrams) * 100));
-        
+
         let progressColor = 'var(--success)';
         if (percentage < 20) progressColor = '#ef4444';
         else if (percentage < 50) progressColor = '#f59e0b';
-        
+
         const card = document.createElement('div');
         card.className = 'filament-spool-card animate-fade';
-        
+
         card.innerHTML = `
             <div class="spool-card-header">
                 <div>
@@ -2117,7 +2582,7 @@ window.renderInventoryGrid = function() {
     });
 };
 
-window.updateSpoolGrams = function(id, value) {
+window.updateSpoolGrams = function (id, value) {
     const spool = appState.inventory.find(s => s.id === id);
     if (spool) {
         let grams = parseFloat(value);
@@ -2130,7 +2595,7 @@ window.updateSpoolGrams = function(id, value) {
     }
 };
 
-window.updateSpoolCost = function(id, value) {
+window.updateSpoolCost = function (id, value) {
     const spool = appState.inventory.find(s => s.id === id);
     if (spool) {
         let cost = parseFloat(value);
@@ -2145,7 +2610,7 @@ window.updateSpoolCost = function(id, value) {
     }
 };
 
-window.deleteSpool = function(id) {
+window.deleteSpool = function (id) {
     if (confirm('¿Estás seguro de que deseas eliminar esta bobina de filamento?')) {
         appState.inventory = appState.inventory.filter(s => s.id !== id);
         saveStateToStorage();
@@ -2176,13 +2641,13 @@ function getColorHex(colorName) {
 }
 
 // --- COST CALCULATOR & INTERNAL CATALOG LOGIC ---
-window.updateFilamentDropdown = function() {
+window.updateFilamentDropdown = function () {
     const select = document.getElementById('calc-filament');
     if (!select) return;
-    
+
     const previousVal = select.value;
     select.innerHTML = '';
-    
+
     if (!appState.inventory || appState.inventory.length === 0) {
         const opt = document.createElement('option');
         opt.value = 'default_12000_1000';
@@ -2190,7 +2655,7 @@ window.updateFilamentDropdown = function() {
         select.appendChild(opt);
         return;
     }
-    
+
     appState.inventory.forEach(spool => {
         const opt = document.createElement('option');
         opt.value = spool.id;
@@ -2207,7 +2672,7 @@ window.updateFilamentDropdown = function() {
     }
 };
 
-window.syncCostInputsFromState = function() {
+window.syncCostInputsFromState = function () {
     if (!appState.costSettings) return;
     const sets = appState.costSettings;
     const electricityInput = document.getElementById('calc-electricity');
@@ -2227,7 +2692,7 @@ window.syncCostInputsFromState = function() {
     }
 };
 
-window.showToast = function(msg) {
+window.showToast = function (msg) {
     let toast = document.getElementById('system-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -2248,13 +2713,13 @@ window.showToast = function(msg) {
     }, 3200);
 };
 
-window.calculatePrintCost = function() {
+window.calculatePrintCost = function () {
     const select = document.getElementById('calc-filament');
     if (!select) return;
-    
+
     let spoolCost = 12000;
     let spoolWeight = 1000;
-    
+
     const selectedId = select.value;
     if (selectedId && selectedId !== 'default_12000_1000') {
         const spool = (appState.inventory || []).find(s => s.id === selectedId);
@@ -2263,14 +2728,14 @@ window.calculatePrintCost = function() {
             spoolWeight = spool.weightGrams;
         }
     }
-    
+
     const weight = parseFloat(document.getElementById('calc-weight')?.value) || 0;
     const hours = parseFloat(document.getElementById('calc-hours')?.value) || 0;
     const errorPercent = parseFloat(document.getElementById('calc-error-margin')?.value) || 0;
     const markup = parseFloat(document.getElementById('calc-markup')?.value) || 0;
     const electricityRate = parseFloat(document.getElementById('calc-electricity')?.value) || 0;
     const depreciationRate = parseFloat(document.getElementById('calc-depreciation')?.value) || 0;
-    
+
     const materialCost = weight * (spoolCost / spoolWeight);
     const errorMarginCost = materialCost * (errorPercent / 100);
     const electricityCost = hours * electricityRate;
@@ -2278,7 +2743,7 @@ window.calculatePrintCost = function() {
     const netCost = materialCost + errorMarginCost + electricityCost + depreciationCost;
     const profitCost = netCost * (markup / 100);
     const suggestedPrice = netCost + profitCost;
-    
+
     const elMat = document.getElementById('calc-cost-material');
     const elErr = document.getElementById('calc-cost-error');
     const elElec = document.getElementById('calc-cost-electricity');
@@ -2294,7 +2759,7 @@ window.calculatePrintCost = function() {
     if (elPrice) elPrice.textContent = `$ ${suggestedPrice.toFixed(2)}`;
 };
 
-window.onCostFormChange = function(event) {
+window.onCostFormChange = function (event) {
     calculatePrintCost();
     const targetId = event && event.target ? event.target.id : '';
     // If the input modified is a cost factor, instantly update the entire internal catalog
@@ -2303,13 +2768,13 @@ window.onCostFormChange = function(event) {
     }
 };
 
-window.onFilamentDropdownChange = function() {
+window.onFilamentDropdownChange = function () {
     calculatePrintCost();
     recalculateInternalCatalog({ silent: true });
 };
 
 // Recalculates all items in the internal catalog with current cost parameters
-window.recalculateInternalCatalog = function(options = {}) {
+window.recalculateInternalCatalog = function (options = {}) {
     const electricityInput = document.getElementById('calc-electricity');
     const depreciationInput = document.getElementById('calc-depreciation');
     const errorMarginInput = document.getElementById('calc-error-margin');
@@ -2400,20 +2865,20 @@ window.recalculateInternalCatalog = function(options = {}) {
 };
 
 // Saves calculated item directly to the Catálogo Interno
-window.pushCalculatedProductToCatalog = function() {
+window.pushCalculatedProductToCatalog = function () {
     const nameInput = document.getElementById('calc-prod-name');
     const name = nameInput.value.trim();
-    
+
     if (!name) {
         alert('Por favor, ingresa un nombre para el producto antes de agregarlo al catálogo.');
         return;
     }
-    
+
     const select = document.getElementById('calc-filament');
     const selectedId = select ? select.value : '';
     let spoolCost = 12000;
     let spoolWeight = 1000;
-    
+
     if (selectedId && selectedId !== 'default_12000_1000') {
         const spool = (appState.inventory || []).find(s => s.id === selectedId);
         if (spool) {
@@ -2421,14 +2886,14 @@ window.pushCalculatedProductToCatalog = function() {
             spoolWeight = spool.weightGrams;
         }
     }
-    
+
     const weight = parseFloat(document.getElementById('calc-weight')?.value) || 0;
     const hours = parseFloat(document.getElementById('calc-hours')?.value) || 0;
     const errorPercent = parseFloat(document.getElementById('calc-error-margin')?.value) || 0;
     const markup = parseFloat(document.getElementById('calc-markup')?.value) || 0;
     const electricityRate = parseFloat(document.getElementById('calc-electricity')?.value) || 0;
     const depreciationRate = parseFloat(document.getElementById('calc-depreciation')?.value) || 0;
-    
+
     const materialCost = weight * (spoolCost / spoolWeight);
     const errorMarginCost = materialCost * (errorPercent / 100);
     const electricityCost = hours * electricityRate;
@@ -2436,7 +2901,7 @@ window.pushCalculatedProductToCatalog = function() {
     const netCost = materialCost + errorMarginCost + electricityCost + depreciationCost;
     const profitCost = netCost * (markup / 100);
     const suggestedPrice = netCost + profitCost;
-    
+
     const newProd = {
         id: `prod_calc_${Date.now()}`,
         title: name,
@@ -2457,24 +2922,25 @@ window.pushCalculatedProductToCatalog = function() {
         category: 'Calculado',
         imageSrc: appState.imagePool && appState.imagePool.length > 0 ? appState.imagePool[0].src : ""
     };
-    
+
     if (!appState.internalProducts) appState.internalProducts = [];
     appState.internalProducts.push(newProd);
-    
+
     nameInput.value = '';
-    
+
     saveStateToStorage();
     renderInternalProductTable();
     showToast(`¡"${name}" guardado en el Catálogo Interno!`);
     if (typeof pushInternalProductToCloud === 'function') pushInternalProductToCloud(newProd);
+    if (typeof notifyNewCostWhatsApp === 'function') notifyNewCostWhatsApp(newProd, false);
 };
 
 // Render Catálogo Interno Tabular Sheet
-window.renderInternalProductTable = function() {
+window.renderInternalProductTable = function () {
     const tbody = document.getElementById('calculator-internal-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
-    
+
     if (!appState.internalProducts || appState.internalProducts.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -2485,11 +2951,11 @@ window.renderInternalProductTable = function() {
         `;
         return;
     }
-    
+
     appState.internalProducts.forEach(prod => {
         const tr = document.createElement('tr');
         tr.className = 'catalog-row-updated';
-        
+
         const weight = prod.weightGrams || 0;
         const matCost = prod.materialCost || 0;
         const hours = prod.hours || 0;
@@ -2499,7 +2965,7 @@ window.renderInternalProductTable = function() {
         const net = prod.netCost || 0;
         const profit = prod.profitCost || 0;
         const suggested = prod.suggestedPrice || 0;
-        
+
         tr.innerHTML = `
             <td><strong>${prod.title}</strong></td>
             <td class="col-suggested" style="text-align: center;"><strong style="color:var(--success); font-size:14px;">$ ${suggested.toFixed(2)}</strong></td>
@@ -2508,6 +2974,9 @@ window.renderInternalProductTable = function() {
                 <div style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;">
                     <button class="btn btn-secondary btn-small btn-view-prod-action" onclick="openViewInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:var(--jf-blue); border-color:rgba(0,153,255,0.35);" title="Ver todos los datos y desglose de costos">
                         👁️ Ver
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="shareInternalProductWhatsApp('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:#25D366; border-color:rgba(37,211,102,0.35);" title="Enviar o reenviar costo por WhatsApp">
+                        📲
                     </button>
                     <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Editar dimensiones y parámetros">
                         Editar
@@ -2521,12 +2990,12 @@ window.renderInternalProductTable = function() {
                 </div>
             </td>
         `;
-        
+
         tbody.appendChild(tr);
     });
 };
 
-window.openViewInternalProductModal = function(id) {
+window.openViewInternalProductModal = function (id) {
     const prod = (appState.internalProducts || []).find(p => p.id === id);
     if (!prod) return;
 
@@ -2618,12 +3087,12 @@ window.openViewInternalProductModal = function(id) {
     if (modal) modal.classList.add('active');
 };
 
-window.closeViewInternalProductModal = function() {
+window.closeViewInternalProductModal = function () {
     const modal = document.getElementById('modal-view-internal-product');
     if (modal) modal.classList.remove('active');
 };
 
-window.deleteInternalProduct = function(id) {
+window.deleteInternalProduct = function (id) {
     if (confirm('¿Estás seguro de que deseas eliminar este diseño de tu catálogo interno?')) {
         appState.internalProducts = appState.internalProducts.filter(p => p.id !== id);
         saveStateToStorage();
@@ -2633,7 +3102,7 @@ window.deleteInternalProduct = function(id) {
     }
 };
 
-window.openEditInternalProductModal = function(id) {
+window.openEditInternalProductModal = function (id) {
     const prod = (appState.internalProducts || []).find(p => p.id === id);
     if (!prod) return;
 
@@ -2659,12 +3128,12 @@ window.openEditInternalProductModal = function(id) {
     if (modal) modal.classList.add('active');
 };
 
-window.closeEditInternalProductModal = function() {
+window.closeEditInternalProductModal = function () {
     const modal = document.getElementById('modal-edit-internal-product');
     if (modal) modal.classList.remove('active');
 };
 
-window.saveEditedInternalProduct = function() {
+window.saveEditedInternalProduct = function () {
     const id = document.getElementById('edit-prod-id').value;
     const prod = (appState.internalProducts || []).find(p => p.id === id);
     if (!prod) return;
@@ -2692,15 +3161,16 @@ window.saveEditedInternalProduct = function() {
     closeEditInternalProductModal();
     recalculateInternalCatalog({ showToast: true });
     if (typeof pushInternalProductToCloud === 'function') pushInternalProductToCloud(prod);
+    if (typeof notifyNewCostWhatsApp === 'function') notifyNewCostWhatsApp(prod, true);
 };
 
 // Copies a template item from Catálogo Interno to Catálogo Público/Digital
-window.publishProductToDigital = function(prodId) {
+window.publishProductToDigital = function (prodId) {
     const internalProd = (appState.internalProducts || []).find(p => p.id === prodId);
     if (!internalProd) return;
-    
+
     const suggested = internalProd.suggestedPrice || 0;
-    
+
     // Check if item was already published by internalProdId or exact title
     if (!appState.products) appState.products = [];
     const existing = appState.products.find(p => p.internalProdId === internalProd.id || p.title.trim().toLowerCase() === internalProd.title.trim().toLowerCase());
@@ -2716,7 +3186,7 @@ window.publishProductToDigital = function(prodId) {
         switchModule('catalog');
         return;
     }
-    
+
     const clonedProd = {
         id: `prod_pub_${Date.now()}`,
         internalProdId: internalProd.id,
@@ -2726,25 +3196,25 @@ window.publishProductToDigital = function(prodId) {
         category: 'Calculado',
         imageSrc: internalProd.imageSrc || (appState.imagePool && appState.imagePool.length > 0 ? appState.imagePool[0].src : "")
     };
-    
+
     appState.products.push(clonedProd);
-    
+
     saveStateToStorage();
     renderProductCardsInEditor();
     updatePreviewAndStats();
-    
+
     showToast(`¡"${internalProd.title}" publicado con éxito en tu catálogo de ventas!`);
     if (typeof pushPublicProductToCloud === 'function') pushPublicProductToCloud(clonedProd);
     switchModule('catalog');
 };
 
 // Syncs all internal products with matching titles or internalProdIds in the sales catalog
-window.syncAllInternalPricesToSalesCatalog = function() {
+window.syncAllInternalPricesToSalesCatalog = function () {
     if (!appState.internalProducts || appState.internalProducts.length === 0) {
         alert('No hay productos en el catálogo interno para sincronizar.');
         return;
     }
-    
+
     let updatedCount = 0;
     appState.internalProducts.forEach(internalProd => {
         const matches = (appState.products || []).filter(p => p.internalProdId === internalProd.id || p.title.trim().toLowerCase() === internalProd.title.trim().toLowerCase());
@@ -2766,20 +3236,20 @@ window.syncAllInternalPricesToSalesCatalog = function() {
 };
 
 // --- CUSTOMER ORDERS TRACKER LOGIC ---
-window.openNewOrderModal = function() {
+window.openNewOrderModal = function () {
     const modal = document.getElementById('modal-new-order');
     if (!modal) return;
-    
+
     document.getElementById('order-client').value = '';
     document.getElementById('order-payment').value = 'Pendiente';
-    
+
     const today = new Date().toISOString().split('T')[0];
     const orderDateEl = document.getElementById('order-date');
     if (orderDateEl) orderDateEl.value = today;
 
     const deliveryDateEl = document.getElementById('order-delivery-date');
     if (deliveryDateEl) deliveryDateEl.value = today;
-    
+
     const searchInput = document.getElementById('order-product-search');
     if (searchInput) searchInput.value = '';
 
@@ -2800,7 +3270,7 @@ window.openNewOrderModal = function() {
         finalPriceInput.value = '0.00';
         finalPriceInput.dataset.userModified = 'false';
     }
-    
+
     const productListBox = document.getElementById('order-product-list');
     if (productListBox) {
         productListBox.innerHTML = '';
@@ -2844,11 +3314,11 @@ window.openNewOrderModal = function() {
             });
         }
     }
-    
+
     modal.classList.add('active');
 };
 
-window.recalculateOrderTotals = function() {
+window.recalculateOrderTotals = function () {
     const items = document.querySelectorAll('.order-product-item');
     let totalQty = 0;
     let totalSuggested = 0;
@@ -2896,7 +3366,7 @@ window.recalculateOrderTotals = function() {
     }
 };
 
-window.onOrderFinancialChange = function(source) {
+window.onOrderFinancialChange = function (source) {
     const totalQtyInput = document.getElementById('order-total-quantity');
     const unitPriceInput = document.getElementById('order-suggested-unit-price');
     const totalSugEl = document.getElementById('order-suggested-total-price');
@@ -2913,7 +3383,7 @@ window.onOrderFinancialChange = function(source) {
     }
 };
 
-window.syncOrderSuggestedPrice = function() {
+window.syncOrderSuggestedPrice = function () {
     const totalQtyInput = document.getElementById('order-total-quantity');
     const unitPriceInput = document.getElementById('order-suggested-unit-price');
     const totalSugEl = document.getElementById('order-suggested-total-price');
@@ -2929,7 +3399,7 @@ window.syncOrderSuggestedPrice = function() {
     showToast('Valor a cobrar igualado al valor total sugerido.');
 };
 
-window.onCustomProductInput = function() {
+window.onCustomProductInput = function () {
     const customTitle = (document.getElementById('order-custom-product')?.value || '').trim();
     if (customTitle) {
         const checkedBoxes = document.querySelectorAll('.order-prod-checkbox:checked');
@@ -2943,7 +3413,7 @@ window.onCustomProductInput = function() {
     }
 };
 
-window.filterOrderProducts = function(query) {
+window.filterOrderProducts = function (query) {
     const q = (query || '').toLowerCase().trim();
     const items = document.querySelectorAll('#order-product-list .order-product-item');
     let visibleCount = 0;
@@ -2956,7 +3426,7 @@ window.filterOrderProducts = function(query) {
             item.style.display = 'none';
         }
     });
-    
+
     let noResultsEl = document.getElementById('order-product-no-results');
     if (visibleCount === 0 && items.length > 0) {
         if (!noResultsEl) {
@@ -2973,18 +3443,18 @@ window.filterOrderProducts = function(query) {
     }
 };
 
-window.closeNewOrderModal = function() {
+window.closeNewOrderModal = function () {
     const modal = document.getElementById('modal-new-order');
     if (modal) modal.classList.remove('active');
 };
 
-window.saveNewOrder = function() {
+window.saveNewOrder = function () {
     const clientName = document.getElementById('order-client').value.trim();
     if (!clientName) {
         alert('Por favor, ingresa el nombre del cliente.');
         return;
     }
-    
+
     const orderDate = document.getElementById('order-date')?.value || new Date().toISOString().split('T')[0];
     const deliveryDate = document.getElementById('order-delivery-date')?.value || orderDate;
     const payment = document.getElementById('order-payment').value;
@@ -3062,23 +3532,24 @@ window.saveNewOrder = function() {
         payment,
         filamentDeducted: false
     };
-    
+
     if (!appState.orders) appState.orders = [];
     appState.orders.push(newOrder);
-    
+
     saveStateToStorage();
     renderOrdersTable();
     updateDashboardData();
     closeNewOrderModal();
     if (typeof pushOrderToCloud === 'function') pushOrderToCloud(newOrder);
     showToast('Pedido registrado con éxito.');
+    if (typeof notifyNewOrderWhatsApp === 'function') notifyNewOrderWhatsApp(newOrder);
 };
 
-window.renderOrdersTable = function() {
+window.renderOrdersTable = function () {
     const tbody = document.getElementById('orders-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
-    
+
     if (!appState.orders || appState.orders.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -3089,10 +3560,10 @@ window.renderOrdersTable = function() {
         `;
         return;
     }
-    
+
     appState.orders.forEach(order => {
         const tr = document.createElement('tr');
-        
+
         const statusOptions = ['En Cola', 'Laminando', 'Imprimiendo', 'Terminado', 'Entregado'];
         let statusSelectHtml = `<select onchange="updateOrderStatus('${order.id}', 'status', this.value)" style="padding: 4px; font-size:12px; width:auto; border-radius:4px; background:rgba(10, 12, 16, 0.8); color: white; border: 1px solid var(--border-color);">`;
         statusOptions.forEach(opt => {
@@ -3100,7 +3571,7 @@ window.renderOrdersTable = function() {
             statusSelectHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
         });
         statusSelectHtml += `</select>`;
-        
+
         const paymentOptions = ['Pendiente', 'Seña Pagada', 'Pagado Completo'];
         let paymentSelectHtml = `<select onchange="updateOrderStatus('${order.id}', 'payment', this.value)" style="padding: 4px; font-size:12px; width:auto; border-radius:4px; background:rgba(10, 12, 16, 0.8); color: white; border: 1px solid var(--border-color);">`;
         paymentOptions.forEach(opt => {
@@ -3108,7 +3579,7 @@ window.renderOrdersTable = function() {
             paymentSelectHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
         });
         paymentSelectHtml += `</select>`;
-        
+
         let formattedOrderDate = 'Sin fecha';
         const rawOrderDate = order.orderDate || (order.id && !isNaN(parseInt(order.id.replace('order_', ''))) ? new Date(parseInt(order.id.replace('order_', ''))).toISOString().split('T')[0] : order.date);
         if (rawOrderDate) {
@@ -3129,9 +3600,9 @@ window.renderOrdersTable = function() {
         const finalPrice = Number(order.finalPrice !== undefined ? order.finalPrice : (order.totalPrice || 0));
         const suggestedTotal = Number(order.suggestedTotalPrice !== undefined ? order.suggestedTotalPrice : finalPrice);
         const suggestedUnit = Number(order.suggestedUnitPrice !== undefined ? order.suggestedUnitPrice : (quantity > 0 ? (suggestedTotal / quantity) : 0));
-        
+
         const productsListText = Array.isArray(order.products) ? order.products.join(', ') : (order.products || '');
-        
+
         tr.innerHTML = `
             <td><strong>#${order.id.slice(-4)}</strong></td>
             <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">📅 ${formattedOrderDate}</td>
@@ -3165,25 +3636,30 @@ window.renderOrdersTable = function() {
             </td>
             <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">🚚 ${formattedDeliveryDate}</td>
             <td style="text-align: center;">
-                <button class="btn btn-secondary btn-small" onclick="deleteOrder('${order.id}')" style="background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,0.2); width:auto;" title="Eliminar pedido">
-                    Eliminar
-                </button>
+                <div style="display:inline-flex; gap:6px; align-items:center;">
+                    <button class="btn btn-secondary btn-small" onclick="shareOrderWhatsApp('${order.id}')" style="background:rgba(37,211,102,0.08); color:#25D366; border:1px solid rgba(37,211,102,0.3); width:auto; padding:4px 8px;" title="Enviar o reenviar resumen por WhatsApp">
+                        📲
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="deleteOrder('${order.id}')" style="background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,0.2); width:auto;" title="Eliminar pedido">
+                        Eliminar
+                    </button>
+                </div>
             </td>
         `;
-        
+
         tbody.appendChild(tr);
     });
 };
 
-window.updateOrderStatus = function(id, field, value) {
+window.updateOrderStatus = function (id, field, value) {
     const order = appState.orders.find(o => o.id === id);
     if (order) {
         order[field] = value;
-        
+
         if (field === 'status' && (value === 'Terminado' || value === 'Entregado')) {
             deductFilamentForOrder(order);
         }
-        
+
         saveStateToStorage();
         renderOrdersTable();
         updateDashboardData();
@@ -3191,7 +3667,7 @@ window.updateOrderStatus = function(id, field, value) {
     }
 };
 
-window.deleteOrder = function(id) {
+window.deleteOrder = function (id) {
     if (confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
         appState.orders = appState.orders.filter(o => o.id !== id);
         saveStateToStorage();
@@ -3204,7 +3680,7 @@ window.deleteOrder = function(id) {
 // --- SOLICITUDES DE DISEÑO Y COSTO LOGIC ---
 let currentDreqFilter = 'all';
 
-window.filterDesignRequests = function(filterType) {
+window.filterDesignRequests = function (filterType) {
     currentDreqFilter = filterType || 'all';
     document.querySelectorAll('[id^="filter-dreq-"]').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById(`filter-dreq-${currentDreqFilter}`);
@@ -3212,7 +3688,7 @@ window.filterDesignRequests = function(filterType) {
     renderDesignRequests();
 };
 
-window.openNewDesignRequestModal = function() {
+window.openNewDesignRequestModal = function () {
     const modal = document.getElementById('modal-design-request');
     if (!modal) return;
     document.getElementById('modal-dreq-title').textContent = 'Registrar Solicitud de Diseño y Costo';
@@ -3223,7 +3699,7 @@ window.openNewDesignRequestModal = function() {
     document.getElementById('dreq-description').value = '';
     document.getElementById('dreq-urls').value = '';
     document.getElementById('dreq-status').value = 'Pendiente';
-    
+
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('dreq-date');
     if (dateInput) dateInput.value = today;
@@ -3231,7 +3707,7 @@ window.openNewDesignRequestModal = function() {
     modal.classList.add('active');
 };
 
-window.openEditDesignRequestModal = function(id) {
+window.openEditDesignRequestModal = function (id) {
     const req = (appState.designRequests || []).find(r => r.id === id);
     if (!req) return;
 
@@ -3251,12 +3727,12 @@ window.openEditDesignRequestModal = function(id) {
     modal.classList.add('active');
 };
 
-window.closeDesignRequestModal = function() {
+window.closeDesignRequestModal = function () {
     const modal = document.getElementById('modal-design-request');
     if (modal) modal.classList.remove('active');
 };
 
-window.saveDesignRequest = function() {
+window.saveDesignRequest = function () {
     const name = document.getElementById('dreq-name').value.trim();
     if (!name) {
         alert('Por favor, ingresa el nombre del producto o modelo 3D.');
@@ -3268,7 +3744,7 @@ window.saveDesignRequest = function() {
     const description = document.getElementById('dreq-description').value.trim();
     const status = document.getElementById('dreq-status').value;
     const date = document.getElementById('dreq-date').value || new Date().toISOString().split('T')[0];
-    
+
     const rawUrls = document.getElementById('dreq-urls').value;
     const urls = rawUrls.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
 
@@ -3308,6 +3784,7 @@ window.saveDesignRequest = function() {
         appState.designRequests.unshift(newReq);
         if (typeof pushDesignRequestToCloud === 'function') pushDesignRequestToCloud(newReq);
         showToast('Solicitud de diseño registrada.');
+        if (typeof notifyNewDesignRequestWhatsApp === 'function') notifyNewDesignRequestWhatsApp(newReq);
     }
 
     saveStateToStorage();
@@ -3315,7 +3792,7 @@ window.saveDesignRequest = function() {
     closeDesignRequestModal();
 };
 
-window.toggleDesignRequestStatus = function(id) {
+window.toggleDesignRequestStatus = function (id) {
     const req = (appState.designRequests || []).find(r => r.id === id);
     if (!req) return;
 
@@ -3336,7 +3813,7 @@ window.toggleDesignRequestStatus = function(id) {
     if (typeof pushDesignRequestToCloud === 'function') pushDesignRequestToCloud(req);
 };
 
-window.deleteDesignRequest = function(id) {
+window.deleteDesignRequest = function (id) {
     const req = (appState.designRequests || []).find(r => r.id === id);
     if (!req) return;
     if (confirm(`¿Estás seguro de que deseas eliminar la solicitud "${req.title}"?`)) {
@@ -3348,7 +3825,7 @@ window.deleteDesignRequest = function(id) {
     }
 };
 
-window.startCostingDesignRequest = function(id) {
+window.startCostingDesignRequest = function (id) {
     const req = (appState.designRequests || []).find(r => r.id === id);
     if (!req) return;
     switchModule('calculator');
@@ -3361,7 +3838,7 @@ window.startCostingDesignRequest = function(id) {
     showToast(`Cargando "${req.title}" en la Calculadora de Costos...`);
 };
 
-window.renderDesignRequests = function() {
+window.renderDesignRequests = function () {
     const tbody = document.getElementById('design-requests-table-body');
     if (!tbody) return;
 
@@ -3450,7 +3927,7 @@ window.renderDesignRequests = function() {
                     else if (h.includes('drive.google')) domain = 'Drive';
                     else if (h.includes('thangs')) domain = 'Thangs';
                     else domain = h.length > 14 ? h.substring(0, 12) + '...' : h;
-                } catch(e) {
+                } catch (e) {
                     domain = `STL #${i + 1}`;
                 }
                 const fullUrl = u.startsWith('http') ? u : 'https://' + u;
@@ -3548,7 +4025,7 @@ function parsePriceStringToFloat(priceStr) {
 
 function deductFilamentForOrder(order) {
     if (order.filamentDeducted) return;
-    
+
     let totalGramsToDeduct = 0;
 
     if (order.items && Array.isArray(order.items) && order.items.length > 0) {
@@ -3584,7 +4061,7 @@ function deductFilamentForOrder(order) {
             }
         });
     }
-    
+
     if (totalGramsToDeduct > 0 && appState.inventory && appState.inventory.length > 0) {
         const spool = appState.inventory[0];
         if (spool) {
@@ -3597,18 +4074,18 @@ function deductFilamentForOrder(order) {
 }
 
 // --- DASHBOARD SYNC LOGIC ---
-window.updateDashboardData = function() {
+window.updateDashboardData = function () {
     const dateHeader = document.getElementById('dashboard-date');
     if (dateHeader) {
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         dateHeader.textContent = now.toLocaleDateString('es-AR', options);
     }
-    
+
     let totalRevenue = 0;
     let activeOrdersCount = 0;
     let totalFilamentGrams = 0;
-    
+
     if (appState.orders) {
         appState.orders.forEach(o => {
             const orderPrice = o.finalPrice !== undefined ? o.finalPrice : (o.totalPrice || 0);
@@ -3618,33 +4095,33 @@ window.updateDashboardData = function() {
             }
         });
     }
-    
+
     if (appState.inventory) {
         appState.inventory.forEach(s => {
             totalFilamentGrams += s.remainingGrams;
         });
     }
-    
+
     const totalFilamentKg = totalFilamentGrams / 1000;
     const productsCount = appState.products ? appState.products.length : 0;
-    
+
     const kpiRevenue = document.getElementById('kpi-revenue');
     if (kpiRevenue) kpiRevenue.textContent = `$ ${totalRevenue.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    
+
     const kpiActive = document.getElementById('kpi-orders-active');
     if (kpiActive) kpiActive.textContent = activeOrdersCount;
-    
+
     const kpiFilament = document.getElementById('kpi-filament-stock');
     if (kpiFilament) kpiFilament.textContent = `${totalFilamentKg.toFixed(2)} kg`;
-    
+
     const kpiProducts = document.getElementById('kpi-products');
     if (kpiProducts) kpiProducts.textContent = productsCount;
-    
+
     const dashTable = document.getElementById('dashboard-orders-table');
     if (dashTable) {
         dashTable.innerHTML = '';
         const activeOrders = (appState.orders || []).filter(o => o.status !== 'Entregado').slice(0, 5);
-        
+
         if (activeOrders.length === 0) {
             dashTable.innerHTML = `
                 <tr>
@@ -3656,7 +4133,7 @@ window.updateDashboardData = function() {
         } else {
             activeOrders.forEach(o => {
                 const tr = document.createElement('tr');
-                
+
                 let formattedOrderDate = 'Sin fecha';
                 const rawOrderDate = o.orderDate || (o.id && !isNaN(parseInt(o.id.replace('order_', ''))) ? new Date(parseInt(o.id.replace('order_', ''))).toISOString().split('T')[0] : o.date);
                 if (rawOrderDate) {
@@ -3676,7 +4153,7 @@ window.updateDashboardData = function() {
                 const priceToCharge = o.finalPrice !== undefined ? o.finalPrice : (o.totalPrice || 0);
                 const quantity = o.quantity || (o.products ? o.products.length : 1);
                 const productsText = Array.isArray(o.products) ? o.products.join(', ') : (o.products || '');
-                
+
                 tr.innerHTML = `
                     <td style="white-space:nowrap; font-size:12px; color:var(--text-secondary);">📅 ${formattedOrderDate}</td>
                     <td><strong>${o.clientName}</strong></td>
@@ -3693,11 +4170,11 @@ window.updateDashboardData = function() {
             });
         }
     }
-    
+
     const dashFilList = document.getElementById('dashboard-filament-list');
     if (dashFilList) {
         dashFilList.innerHTML = '';
-        
+
         if (!appState.inventory || appState.inventory.length === 0) {
             dashFilList.innerHTML = `
                 <div style="text-align:center;color:var(--text-secondary);padding:30px;">
@@ -3707,11 +4184,11 @@ window.updateDashboardData = function() {
         } else {
             appState.inventory.slice(0, 4).forEach(spool => {
                 const percentage = Math.max(0, Math.min(100, (spool.remainingGrams / spool.weightGrams) * 100));
-                
+
                 let progressColor = 'var(--success)';
                 if (percentage < 20) progressColor = '#ef4444';
                 else if (percentage < 50) progressColor = '#f59e0b';
-                
+
                 const div = document.createElement('div');
                 div.className = 'spool-row';
                 div.innerHTML = `

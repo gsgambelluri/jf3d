@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="stylesheet" href="styles.css?v=2.1">
 </head>
+
 <body>
 
     <!-- --- AUTHENTICATION & LOGIN SCREEN --- -->
@@ -39,8 +41,10 @@
                 <div class="form-group" style="margin-bottom: 18px;">
                     <label for="auth-password">Contraseña</label>
                     <div style="position: relative;">
-                        <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-password')" tabindex="-1">
+                        <input type="password" id="auth-password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password"
+                            onclick="togglePasswordVisibility('auth-password')" tabindex="-1">
                             👁️
                         </button>
                     </div>
@@ -48,10 +52,12 @@
 
                 <div id="register-password-confirm-box" class="form-group" style="display: none; margin-bottom: 18px;">
                     <label for="auth-password-confirm">Confirmar Contraseña</label>
-                    <input type="password" id="auth-password-confirm" placeholder="••••••••" autocomplete="new-password">
+                    <input type="password" id="auth-password-confirm" placeholder="••••••••"
+                        autocomplete="new-password">
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="btn-auth-submit" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600;">
+                <button type="submit" class="btn btn-primary" id="btn-auth-submit"
+                    style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600;">
                     Ingresar al Sistema
                 </button>
             </form>
@@ -61,8 +67,10 @@
             </div>
 
             <button type="button" class="btn-quick-access" onclick="handleQuickStudioAccess()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                 </svg>
                 Ingreso con Clave Maestra del Taller
             </button>
@@ -71,7 +79,7 @@
 
     <!-- --- UNIFIED APPLICATION CONTAINER --- -->
     <div id="app-container">
-        
+
         <!-- --- MOBILE TOP HEADER (MOBILE ONLY) --- -->
         <header class="mobile-topbar no-print">
             <div class="mobile-brand">
@@ -81,14 +89,22 @@
                     <span class="mobile-current-badge" id="mobile-current-section">📊 Inicio</span>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión en la nube">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openWhatsAppModal()"
+                    title="Configurar Alertas de WhatsApp" style="border-color: rgba(37, 211, 102, 0.35);">
+                    <span class="whatsapp-status-dot cloud-status-dot offline"></span>
+                    <span class="whatsapp-status-text" style="color: #25D366;">WhatsApp</span>
+                </button>
+                <button type="button" class="btn-cloud-status mobile-cloud-status" onclick="openSupabaseModal()"
+                    title="Configurar conexión en la nube">
                     <span class="cloud-status-dot"></span>
                     <span class="cloud-status-text">Modo Local</span>
                 </button>
                 <button type="button" class="mobile-logout-btn" onclick="logoutUser()" title="Cerrar Sesión">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                     </svg>
                 </button>
             </div>
@@ -105,59 +121,88 @@
             </div>
 
             <nav class="system-nav">
-                <button type="button" class="nav-item active" id="btn-nav-dashboard" onclick="switchModule('dashboard')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                <button type="button" class="nav-item active" id="btn-nav-dashboard"
+                    onclick="switchModule('dashboard')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                     </svg>
                     <span>Inicio</span>
                 </button>
                 <button type="button" class="nav-item" id="btn-nav-orders" onclick="switchModule('orders')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
                     <span>Pedidos</span>
                 </button>
-                <button type="button" class="nav-item" id="btn-nav-design-requests" onclick="switchModule('design-requests')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                <button type="button" class="nav-item" id="btn-nav-design-requests"
+                    onclick="switchModule('design-requests')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                     </svg>
                     <span>Diseño y Costeo</span>
                 </button>
                 <button type="button" class="nav-item" id="btn-nav-catalog" onclick="switchModule('catalog')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                     </svg>
                     <span>Catálogo Ventas</span>
                 </button>
                 <button type="button" class="nav-item" id="btn-nav-calculator" onclick="switchModule('calculator')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
                     </svg>
                     <span>Calculadora Costos</span>
                 </button>
                 <button type="button" class="nav-item" id="btn-nav-inventory" onclick="switchModule('inventory')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                     </svg>
                     <span>Insumos / Filamentos</span>
                 </button>
             </nav>
-            
-            <div class="sidebar-cloud-footer" style="padding: 12px 14px; border-top: 1px solid var(--border-color); margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
-                <button type="button" class="btn-cloud-status" id="btn-cloud-status" onclick="openSupabaseModal()" title="Configurar conexión a la base de datos en la nube">
+
+            <div class="sidebar-cloud-footer"
+                style="padding: 12px 14px; border-top: 1px solid var(--border-color); margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn-cloud-status" id="btn-whatsapp-status" onclick="openWhatsAppModal()"
+                    title="Configurar alertas automáticas de WhatsApp (2 números)"
+                    style="border-color: rgba(37, 211, 102, 0.3); background: rgba(37, 211, 102, 0.06);">
+                    <span class="whatsapp-status-dot cloud-status-dot offline" id="whatsapp-status-dot"></span>
+                    <span class="whatsapp-status-text" id="whatsapp-status-text"
+                        style="color: #25D366; font-weight: 600;">Alertas WhatsApp</span>
+                </button>
+                <button type="button" class="btn-cloud-status" id="btn-cloud-status" onclick="openSupabaseModal()"
+                    title="Configurar conexión a la base de datos en la nube">
                     <span class="cloud-status-dot" id="cloud-status-dot"></span>
                     <span id="cloud-status-text">Modo Local</span>
                 </button>
-                <div class="user-session-bar" id="user-session-bar" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px;">
+                <div class="user-session-bar" id="user-session-bar"
+                    style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 8px;">
                     <div class="user-info-pill" style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-                        <div class="user-avatar" id="user-avatar" style="width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #a855f7); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;">
+                        <div class="user-avatar" id="user-avatar"
+                            style="width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #a855f7); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;">
                             JF
                         </div>
-                        <span id="user-email-display" style="font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 140px;">Administrador</span>
+                        <span id="user-email-display"
+                            style="font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 140px;">Administrador</span>
                     </div>
-                    <button type="button" class="btn-logout" onclick="logoutUser()" title="Cerrar Sesión" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: color 0.2s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    <button type="button" class="btn-logout" onclick="logoutUser()" title="Cerrar Sesión"
+                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: color 0.2s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" style="width: 16px; height: 16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                         </svg>
                     </button>
                 </div>
@@ -166,20 +211,22 @@
 
         <!-- --- WORKSPACE / SYSTEM MODULES PANELS --- -->
         <main class="system-content">
-            
+
             <!-- MODULE 1: DASHBOARD OVERVIEW -->
             <section class="module-view active" id="view-dashboard">
                 <div class="module-header">
                     <h2>Panel de Control - JF 3D Studio</h2>
                     <span class="header-date" id="dashboard-date">Cargando fecha...</span>
                 </div>
-                
+
                 <!-- KPI cards grid -->
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-icon accent-blue">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.251.11a3.371 3.371 0 003.498 0l.251-.11a3.371 3.371 0 000-6.364l-.251-.11a3.371 3.371 0 00-3.498 0l-.251.11A3.37 3.37 0 009 13.182z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 6v12m-3-2.818l.251.11a3.371 3.371 0 003.498 0l.251-.11a3.371 3.371 0 000-6.364l-.251-.11a3.371 3.371 0 00-3.498 0l-.251.11A3.37 3.37 0 009 13.182z" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -189,8 +236,10 @@
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icon accent-indigo">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-8.982m-9 0L18 3.018m-9 9l9 9m-9-9l9-9" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9.813 15.904L9 21l8.982-8.982m-9 0L18 3.018m-9 9l9 9m-9-9l9-9" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -200,8 +249,10 @@
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icon accent-emerald">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -211,8 +262,10 @@
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icon accent-purple">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -227,7 +280,8 @@
                     <div class="section-card">
                         <div class="section-card-header">
                             <h3>Monitoreo de Pedidos en Cola</h3>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="switchModule('orders')">Ver todos</button>
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="switchModule('orders')">Ver todos</button>
                         </div>
                         <div class="mobile-table-hint">
                             <span>↔️ Desliza la tabla para ver todos los pedidos</span>
@@ -246,7 +300,9 @@
                                 </thead>
                                 <tbody id="dashboard-orders-table">
                                     <tr>
-                                        <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando pedidos...</td>
+                                        <td colspan="6"
+                                            style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando
+                                            pedidos...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -257,21 +313,24 @@
                     <div class="section-card">
                         <div class="section-card-header">
                             <h3>Nivel de Insumos</h3>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="switchModule('inventory')">Gestionar</button>
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="switchModule('inventory')">Gestionar</button>
                         </div>
                         <div class="inventory-status-list" id="dashboard-filament-list">
-                            <div style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando stock de filamento...</div>
+                            <div style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando stock de
+                                filamento...</div>
                         </div>
                     </div>
                 </div>
             </section>
-            
+
             <!-- MODULE 2: ORDERS TRACKER -->
             <section class="module-view" id="view-orders">
                 <div class="module-header">
                     <h2>Gestión de Pedidos de Clientes</h2>
                     <button type="button" class="btn btn-primary" onclick="openNewOrderModal()" style="width:auto;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" style="width:16px;height:16px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                         Nuevo Pedido
@@ -302,14 +361,17 @@
                             </thead>
                             <tbody id="orders-table-body">
                                 <tr>
-                                    <td colspan="12" style="text-align:center;color:var(--text-secondary);padding:40px;">No hay pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.</td>
+                                    <td colspan="12"
+                                        style="text-align:center;color:var(--text-secondary);padding:40px;">No hay
+                                        pedidos registrados en el sistema. Haz clic en "Nuevo Pedido" para comenzar.
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </section>
-            
+
             <!-- MODULE: DESIGN AND COST REQUESTS -->
             <section class="module-view" id="view-design-requests">
                 <div class="module-header">
@@ -319,8 +381,10 @@
                             Registro y seguimiento de productos a diseñar, búsqueda de modelos STL y presupuestos
                         </p>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="openNewDesignRequestModal()" style="width:auto;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                    <button type="button" class="btn btn-primary" onclick="openNewDesignRequestModal()"
+                        style="width:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" style="width:16px;height:16px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                         Nueva Solicitud
@@ -328,11 +392,14 @@
                 </div>
 
                 <!-- KPI / Counters Bar -->
-                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 18px;">
+                <div class="kpi-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 18px;">
                     <div class="kpi-card" style="padding: 14px 18px;">
                         <div class="kpi-icon accent-blue">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -342,8 +409,10 @@
                     </div>
                     <div class="kpi-card" style="padding: 14px 18px;">
                         <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="kpi-details">
@@ -353,31 +422,42 @@
                     </div>
                     <div class="kpi-card" style="padding: 14px 18px;">
                         <div class="kpi-icon accent-emerald">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="kpi-details">
                             <span class="kpi-title">Realizadas</span>
-                            <h3 class="kpi-value" id="kpi-dreq-done" style="font-size: 22px; color: var(--success);">0</h3>
+                            <h3 class="kpi-value" id="kpi-dreq-done" style="font-size: 22px; color: var(--success);">0
+                            </h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- Main Card: Search, Filters & Table -->
                 <div class="section-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
                         <div style="position: relative; flex: 1; min-width: 240px; max-width: 400px;">
-                            <input type="text" id="dreq-search" placeholder="🔍 Buscar por nombre, observación o link..." oninput="renderDesignRequests()" style="padding: 8px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                            <input type="text" id="dreq-search"
+                                placeholder="🔍 Buscar por nombre, observación o link..."
+                                oninput="renderDesignRequests()"
+                                style="padding: 8px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
                         </div>
-                        <div class="auth-tabs" style="margin-bottom: 0; background: rgba(10, 12, 16, 0.6); padding: 3px; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <button type="button" class="auth-tab-btn active" id="filter-dreq-all" onclick="filterDesignRequests('all')" style="padding: 6px 12px; font-size: 12px;">
+                        <div class="auth-tabs"
+                            style="margin-bottom: 0; background: rgba(10, 12, 16, 0.6); padding: 3px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button type="button" class="auth-tab-btn active" id="filter-dreq-all"
+                                onclick="filterDesignRequests('all')" style="padding: 6px 12px; font-size: 12px;">
                                 Todas (<span id="count-dreq-all">0</span>)
                             </button>
-                            <button type="button" class="auth-tab-btn" id="filter-dreq-pending" onclick="filterDesignRequests('pending')" style="padding: 6px 12px; font-size: 12px;">
+                            <button type="button" class="auth-tab-btn" id="filter-dreq-pending"
+                                onclick="filterDesignRequests('pending')" style="padding: 6px 12px; font-size: 12px;">
                                 ⏳ Pendientes (<span id="count-dreq-pending">0</span>)
                             </button>
-                            <button type="button" class="auth-tab-btn" id="filter-dreq-done" onclick="filterDesignRequests('done')" style="padding: 6px 12px; font-size: 12px;">
+                            <button type="button" class="auth-tab-btn" id="filter-dreq-done"
+                                onclick="filterDesignRequests('done')" style="padding: 6px 12px; font-size: 12px;">
                                 ✅ Realizadas (<span id="count-dreq-done">0</span>)
                             </button>
                         </div>
@@ -413,19 +493,21 @@
 
             <!-- MODULE 3: SALES CATALOG CREATOR (Existing catalog wrapper) -->
             <section class="module-view mobile-tab-editor" id="view-catalog">
-                
+
                 <!-- Mobile sub-tabs for catalog -->
                 <div class="catalog-mobile-tabs no-print">
-                    <button type="button" class="catalog-mob-tab active" id="btn-cat-mob-editor" onclick="switchCatalogMobileTab('editor')">
+                    <button type="button" class="catalog-mob-tab active" id="btn-cat-mob-editor"
+                        onclick="switchCatalogMobileTab('editor')">
                         🛠️ Diseñador &amp; Productos
                     </button>
-                    <button type="button" class="catalog-mob-tab" id="btn-cat-mob-preview" onclick="switchCatalogMobileTab('preview')">
+                    <button type="button" class="catalog-mob-tab" id="btn-cat-mob-preview"
+                        onclick="switchCatalogMobileTab('preview')">
                         📄 Hoja A4 &amp; Imprimir
                     </button>
                 </div>
-                
+
                 <div id="catalog-module-layout">
-                    
+
                     <!-- --- SIDEBAR: DESIGN CONTROLS (SCREEN ONLY) --- -->
                     <aside class="sidebar no-print" id="sidebar-controls">
                         <div class="sidebar-header" style="padding: 16px;">
@@ -445,7 +527,8 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Datos de Contacto</label>
-                                    <input type="text" id="brand-contact" value="WhatsApp: +54 9 11 1234-5678 | Instagram: @jf3d.ok">
+                                    <input type="text" id="brand-contact"
+                                        value="WhatsApp: +54 9 11 1234-5678 | Instagram: @jf3d.ok">
                                 </div>
                                 <div class="form-group">
                                     <label>Logo de la Empresa</label>
@@ -462,21 +545,26 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Subtítulo / Especialidad</label>
-                                    <input type="text" id="catalog-subtitle" value="Impresiones 3D y Diseños Personalizados">
+                                    <input type="text" id="catalog-subtitle"
+                                        value="Impresiones 3D y Diseños Personalizados">
                                 </div>
                                 <div class="form-group">
                                     <label>Imagen Principal de Portada</label>
                                     <div style="display: flex; flex-direction: column; gap: 6px;">
                                         <input type="file" id="cover-upload" accept="image/*" style="display: none;">
                                         <div style="display: flex; gap: 6px;">
-                                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('cover-upload').click()" style="padding: 6px 8px; font-size: 11px; flex: 1;">
+                                            <button type="button" class="btn btn-secondary"
+                                                onclick="document.getElementById('cover-upload').click()"
+                                                style="padding: 6px 8px; font-size: 11px; flex: 1;">
                                                 Subir Imagen
                                             </button>
-                                            <button type="button" class="btn btn-secondary" id="btn-select-cover-pool" style="padding: 6px 8px; font-size: 11px; flex: 1;">
+                                            <button type="button" class="btn btn-secondary" id="btn-select-cover-pool"
+                                                style="padding: 6px 8px; font-size: 11px; flex: 1;">
                                                 Usar Extraída
                                             </button>
                                         </div>
-                                        <button type="button" class="btn btn-secondary" id="btn-use-logo-cover" style="padding: 6px 8px; font-size: 11px; width: 100%;">
+                                        <button type="button" class="btn btn-secondary" id="btn-use-logo-cover"
+                                            style="padding: 6px 8px; font-size: 11px; width: 100%;">
                                             Usar Logo de la Empresa
                                         </button>
                                     </div>
@@ -502,17 +590,20 @@
                                 <div class="form-group">
                                     <label>Tema del Catálogo</label>
                                     <div class="theme-options">
-                                        <button type="button" class="theme-btn active" data-theme="modern">Moderno</button>
+                                        <button type="button" class="theme-btn active"
+                                            data-theme="modern">Moderno</button>
                                         <button type="button" class="theme-btn" data-theme="luxury">Editorial</button>
-                                        <button type="button" class="theme-btn" data-theme="industrial">Bold Grid</button>
+                                        <button type="button" class="theme-btn" data-theme="industrial">Bold
+                                            Grid</button>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>Márgenes de Página</label>
                                     <div class="theme-options">
                                         <button type="button" class="theme-btn" data-margin="narrow">Fino</button>
-                                        <button type="button" class="theme-btn active" data-margin="normal">Medio</button>
+                                        <button type="button" class="theme-btn active"
+                                            data-margin="normal">Medio</button>
                                         <button type="button" class="theme-btn" data-margin="wide">Ancho</button>
                                     </div>
                                 </div>
@@ -549,27 +640,38 @@
                                     <label>Productos por Página</label>
                                     <input type="number" id="prod-per-page" min="1" max="12" value="4">
                                 </div>
-                                
-                                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
-                                    <input type="checkbox" id="show-cover" checked style="width:14px; height:14px; cursor:pointer;">
-                                    <label for="show-cover" style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar Portada Principal</label>
+
+                                <div class="form-group"
+                                    style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                    <input type="checkbox" id="show-cover" checked
+                                        style="width:14px; height:14px; cursor:pointer;">
+                                    <label for="show-cover"
+                                        style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar Portada
+                                        Principal</label>
                                 </div>
-                                
-                                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
-                                    <input type="checkbox" id="show-back" checked style="width:14px; height:14px; cursor:pointer;">
-                                    <label for="show-back" style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar Contraportada</label>
+
+                                <div class="form-group"
+                                    style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                    <input type="checkbox" id="show-back" checked
+                                        style="width:14px; height:14px; cursor:pointer;">
+                                    <label for="show-back"
+                                        style="margin-bottom:0; cursor:pointer; font-size:11px;">Generar
+                                        Contraportada</label>
                                 </div>
                             </section>
                         </div>
 
                         <div class="sidebar-footer" style="padding: 12px; gap: 8px;">
                             <button class="btn btn-primary" id="btn-print" style="padding: 8px 12px; font-size: 12px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18" />
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                    stroke="currentColor" style="width:16px;height:16px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18" />
                                 </svg>
                                 Imprimir Catálogo
                             </button>
-                            <button class="btn btn-secondary" id="btn-reset" style="padding: 8px 12px; font-size: 12px;">
+                            <button class="btn btn-secondary" id="btn-reset"
+                                style="padding: 8px 12px; font-size: 12px;">
                                 Cargar otro Word
                             </button>
                         </div>
@@ -577,16 +679,18 @@
 
                     <!-- --- MAIN VIEWPORT PANEL (SCREEN ONLY) --- -->
                     <main class="main-viewport" style="flex: 1; height: 100%;">
-                        
+
                         <!-- Top bar (Screen navigation & stats) -->
                         <header class="top-bar no-print" style="height: 50px; background-color: rgba(15, 17, 21, 0.5);">
-                            <nav class="view-tabs" id="nav-tabs" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+                            <nav class="view-tabs" id="nav-tabs"
+                                style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
                                 <button class="tab-btn active" id="tab-preview">Vista PDF</button>
                                 <button class="tab-btn" id="tab-editor">Editor Grilla</button>
                                 <button class="tab-btn" id="tab-raw">Raw DOCX</button>
                             </nav>
 
-                            <div class="stats-bar" id="stats-view" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+                            <div class="stats-bar" id="stats-view"
+                                style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
                                 <span><strong id="stat-products">0</strong> productos</span>
                                 <span><strong id="stat-pages">0</strong> páginas</span>
                             </div>
@@ -596,21 +700,28 @@
                         <div class="workspace-panel active" id="panel-setup">
                             <div class="setup-card" style="padding: 30px; max-width: 500px;">
                                 <div class="setup-icon" style="width:60px; height:60px; margin-bottom:16px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:30px; height:30px;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="2" stroke="currentColor" style="width:30px; height:30px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25" />
                                     </svg>
                                 </div>
                                 <h2 style="font-size:18px; margin-bottom:8px;">Importar Catálogo de Ventas</h2>
                                 <p style="font-size:12px; margin-bottom:20px;">
-                                    Arrastra tu archivo "CATALOGO V1.docx" para rellenar de forma inmediata el catálogo digital de tu sistema.
+                                    Arrastra tu archivo "CATALOGO V1.docx" para rellenar de forma inmediata el catálogo
+                                    digital de tu sistema.
                                 </p>
-                                
+
                                 <div class="drop-zone" id="drop-zone" style="padding: 24px 12px; border-width: 2px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:36px; height:36px;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" style="width:36px; height:36px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3" />
                                     </svg>
-                                    <span class="drop-zone-text" style="font-size: 12px;">Arrastra aquí tu archivo Word o haz clic para buscar</span>
-                                    <span class="drop-zone-sub" style="font-size: 10px;">Formato admitido: Documento de Word (.docx)</span>
+                                    <span class="drop-zone-text" style="font-size: 12px;">Arrastra aquí tu archivo Word
+                                        o haz clic para buscar</span>
+                                    <span class="drop-zone-sub" style="font-size: 10px;">Formato admitido: Documento de
+                                        Word (.docx)</span>
                                     <input type="file" class="file-input" id="file-input" accept=".docx">
                                 </div>
                             </div>
@@ -620,7 +731,8 @@
                         <div class="workspace-panel" id="panel-editor" style="padding: 20px 10px;">
                             <div class="editor-header-actions" style="margin-bottom:15px;">
                                 <h2 style="font-size:16px;">Catálogo de Productos - Grilla de Contenido</h2>
-                                <button class="btn btn-primary" id="btn-add-product" style="width: auto; padding: 6px 12px; font-size:12px;">
+                                <button class="btn btn-primary" id="btn-add-product"
+                                    style="width: auto; padding: 6px 12px; font-size:12px;">
                                     + Añadir Producto
                                 </button>
                             </div>
@@ -642,34 +754,35 @@
                                 <!-- Raw text extracts will be shown here -->
                             </div>
                         </div>
-                        
+
                     </main>
                 </div>
             </section>
-            
+
             <!-- MODULE 4: COST CALCULATOR -->
             <section class="module-view" id="view-calculator">
                 <div class="module-header">
                     <h2>Calculadora de Costos de Impresión 3D</h2>
                 </div>
-                
+
                 <div class="calculator-layout">
                     <!-- Left: Parameters Form -->
                     <div class="section-card">
                         <h3>Parámetros de Fabricación</h3>
-                        <form id="calc-form" oninput="onCostFormChange(event)" style="margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
+                        <form id="calc-form" oninput="onCostFormChange(event)"
+                            style="margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
                             <div class="form-group">
                                 <label for="calc-filament">Material / Bobina de Filamento</label>
                                 <select id="calc-filament" onchange="onFilamentDropdownChange()">
                                     <option value="">Cargando filamentos...</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="calc-weight">Peso del Modelo impreso (gramos)</label>
                                 <input type="number" id="calc-weight" min="1" value="50" step="1">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="calc-hours">Tiempo estimado de Impresión (horas)</label>
                                 <input type="number" id="calc-hours" min="0.1" value="6" step="0.5">
@@ -686,7 +799,7 @@
                             </div>
 
                             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 6px 0;">
-                            
+
                             <div class="form-group">
                                 <label>Costos Fijos del Taller (Opcional)</label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -704,11 +817,13 @@
                     </div>
 
                     <!-- Right: Pricing results card & catalog push -->
-                    <div class="section-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="section-card"
+                        style="display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <h3>Desglose de Costos e Importe</h3>
-                            
-                            <div class="calc-results-list" style="margin-top: 20px; display: flex; flex-direction: column; gap: 14px;">
+
+                            <div class="calc-results-list"
+                                style="margin-top: 20px; display: flex; flex-direction: column; gap: 14px;">
                                 <div class="calc-result-row">
                                     <span>Costo del Material:</span>
                                     <strong id="calc-cost-material">$ 0.00</strong>
@@ -725,43 +840,67 @@
                                     <span>Desgaste / Amortización Máquina:</span>
                                     <strong id="calc-cost-depreciation">$ 0.00</strong>
                                 </div>
-                                <div class="calc-result-row divider" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 5px;">
+                                <div class="calc-result-row divider"
+                                    style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 5px;">
                                     <span style="font-size: 14px; font-weight: 600;">Costo Neto de Fabricación:</span>
-                                    <strong id="calc-cost-net" style="font-size: 16px; color: var(--text-primary);">$ 0.00</strong>
+                                    <strong id="calc-cost-net" style="font-size: 16px; color: var(--text-primary);">$
+                                        0.00</strong>
                                 </div>
-                                <div class="calc-result-row highlight" style="background-color: var(--accent-glow); padding: 12px; border-radius: 8px; border: 1px solid var(--border-hover); margin-top: 10px;">
-                                    <span style="font-size: 14px; font-weight: 700; color: white;">Precio de Venta Sugerido:</span>
-                                    <strong id="calc-price-suggested" style="font-size: 20px; color: var(--success); font-weight: 700;">$ 0.00</strong>
+                                <div class="calc-result-row highlight"
+                                    style="background-color: var(--accent-glow); padding: 12px; border-radius: 8px; border: 1px solid var(--border-hover); margin-top: 10px;">
+                                    <span style="font-size: 14px; font-weight: 700; color: white;">Precio de Venta
+                                        Sugerido:</span>
+                                    <strong id="calc-price-suggested"
+                                        style="font-size: 20px; color: var(--success); font-weight: 700;">$
+                                        0.00</strong>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Catalog push Form -->
                         <div style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
-                            <h4 style="font-size:12px; margin-bottom:10px; color: var(--text-secondary);">Añadir este Item al Catálogo</h4>
+                            <h4 style="font-size:12px; margin-bottom:10px; color: var(--text-secondary);">Añadir este
+                                Item al Catálogo</h4>
                             <div class="form-group" style="margin-bottom:10px;">
                                 <label style="font-size:10px;">Nombre del Producto Calculado</label>
                                 <input type="text" id="calc-prod-name" placeholder="Ej. Maceta Robot Mini">
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="pushCalculatedProductToCatalog()">
-                                Guardar en Catálogo Interno
-                            </button>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button type="button" class="btn btn-primary"
+                                    onclick="pushCalculatedProductToCatalog()">
+                                    Guardar en Catálogo Interno
+                                </button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="notifyCurrentCalculationWhatsApp()"
+                                    style="border-color: rgba(37, 211, 102, 0.35); color: #25D366; background: rgba(37, 211, 102, 0.08);">
+                                    📲 Avisar este Cálculo por WhatsApp
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Bottom: Internal Catalog Cost Sheet Table -->
                 <div class="section-card" style="grid-column: 1 / -1; margin-top: 20px;">
-                    <div class="section-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div class="section-card-header"
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div>
                             <h3>Catálogo Interno - Repositorio de Diseños y Costos</h3>
-                            <span style="font-size: 11px; color: var(--text-secondary);">Mapeo detallado de cotizaciones locales. Se actualiza automáticamente al cambiar costos de insumos, luz, amortización o márgenes.</span>
+                            <span style="font-size: 11px; color: var(--text-secondary);">Mapeo detallado de cotizaciones
+                                locales. Se actualiza automáticamente al cambiar costos de insumos, luz, amortización o
+                                márgenes.</span>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <button type="button" class="btn btn-secondary btn-small" onclick="recalculateInternalCatalog({ showToast: true })" style="padding: 6px 12px; font-size: 11px; width: auto;" title="Recalcular todo el catálogo interno con los costos y tarifas actuales">
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="recalculateInternalCatalog({ showToast: true })"
+                                style="padding: 6px 12px; font-size: 11px; width: auto;"
+                                title="Recalcular todo el catálogo interno con los costos y tarifas actuales">
                                 ⚡ Recalcular Todo
                             </button>
-                            <button type="button" class="btn btn-primary btn-small" onclick="syncAllInternalPricesToSalesCatalog()" style="padding: 6px 12px; font-size: 11px; width: auto;" title="Sincronizar precios calculados con el Catálogo de Ventas Digital">
+                            <button type="button" class="btn btn-primary btn-small"
+                                onclick="syncAllInternalPricesToSalesCatalog()"
+                                style="padding: 6px 12px; font-size: 11px; width: auto;"
+                                title="Sincronizar precios calculados con el Catálogo de Ventas Digital">
                                 🔄 Sincronizar con Ventas
                             </button>
                         </div>
@@ -787,13 +926,14 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- MODULE 5: FILAMENT INVENTORY -->
             <section class="module-view" id="view-inventory">
                 <div class="module-header">
                     <h2>Inventario de Bobinas de Filamento</h2>
                     <button type="button" class="btn btn-primary" onclick="openAddFilamentModal()" style="width:auto;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:16px;height:16px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" style="width:16px;height:16px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                         Registrar Filamento
@@ -804,44 +944,60 @@
                     <!-- Spool stock cards will be generated here -->
                 </div>
             </section>
-            
+
         </main>
 
         <!-- --- MOBILE BOTTOM DOCK / NAVIGATION BAR --- -->
         <nav class="mobile-bottom-nav no-print">
-            <button type="button" class="mobile-nav-item active" id="btn-mob-nav-dashboard" onclick="switchModule('dashboard')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            <button type="button" class="mobile-nav-item active" id="btn-mob-nav-dashboard"
+                onclick="switchModule('dashboard')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
                 <span>Inicio</span>
             </button>
             <button type="button" class="mobile-nav-item" id="btn-mob-nav-orders" onclick="switchModule('orders')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
                 <span>Pedidos</span>
             </button>
-            <button type="button" class="mobile-nav-item" id="btn-mob-nav-design-requests" onclick="switchModule('design-requests')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-design-requests"
+                onclick="switchModule('design-requests')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                 </svg>
                 <span>Diseños</span>
             </button>
             <button type="button" class="mobile-nav-item" id="btn-mob-nav-catalog" onclick="switchModule('catalog')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>
                 <span>Catálogo</span>
             </button>
-            <button type="button" class="mobile-nav-item" id="btn-mob-nav-calculator" onclick="switchModule('calculator')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-calculator"
+                onclick="switchModule('calculator')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 15.75V18m-3-9v8.25m-3-3v3m3-12h.008v.008H12.75V5.25zm0 2.25h.008v.008H12.75V7.5zm0 2.25h.008v.008H12.75V9.75zM3.75 19.5h16.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0020.25 4.5H3.75A2.25 2.25 0 001.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
                 </svg>
                 <span>Costos</span>
             </button>
-            <button type="button" class="mobile-nav-item" id="btn-mob-nav-inventory" onclick="switchModule('inventory')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            <button type="button" class="mobile-nav-item" id="btn-mob-nav-inventory"
+                onclick="switchModule('inventory')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                 </svg>
                 <span>Insumos</span>
             </button>
@@ -865,7 +1021,8 @@
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
                 <!-- Cliente y Estado de Pago -->
-                <div class="modal-grid-2col ratio-2-1" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col ratio-2-1"
+                    style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="order-client">Nombre del Cliente *</label>
                         <input type="text" id="order-client" placeholder="Ej. Juan Pérez">
@@ -884,64 +1041,91 @@
                 <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="order-date">📅 Fecha del Pedido *</label>
-                        <input type="date" id="order-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+                        <input type="date" id="order-date" onkeydown="return false" onpaste="return false"
+                            onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
                     </div>
                     <div class="form-group">
                         <label for="order-delivery-date">🚚 Fecha Prometida de Entrega</label>
-                        <input type="date" id="order-delivery-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+                        <input type="date" id="order-delivery-date" onkeydown="return false" onpaste="return false"
+                            onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
                     </div>
                 </div>
 
                 <!-- Selección de Productos del Catálogo Interno -->
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
-                        <label for="order-product-search" style="margin-bottom: 0;">Seleccionar Productos del Catálogo</label>
-                        <span style="font-size: 11px; color: var(--text-secondary);">Indica la cantidad por cada producto</span>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                        <label for="order-product-search" style="margin-bottom: 0;">Seleccionar Productos del
+                            Catálogo</label>
+                        <span style="font-size: 11px; color: var(--text-secondary);">Indica la cantidad por cada
+                            producto</span>
                     </div>
                     <div style="position: relative; margin-bottom: 8px;">
-                        <input type="text" id="order-product-search" placeholder="🔍 Buscar producto en el catálogo..." oninput="filterOrderProducts(this.value)" style="padding: 9px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                        <input type="text" id="order-product-search" placeholder="🔍 Buscar producto en el catálogo..."
+                            oninput="filterOrderProducts(this.value)"
+                            style="padding: 9px 12px; font-size: 13px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
                     </div>
                     <div class="order-product-selection-box" id="order-product-list">
                         <!-- Populated dynamically from internal catalog -->
                     </div>
                     <div style="margin-top: 8px;">
-                        <input type="text" id="order-custom-product" placeholder="➕ O ingresa un producto personalizado (opcional)..." oninput="onCustomProductInput()" style="padding: 8px 12px; font-size: 12px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.6); border: 1px dashed var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                        <input type="text" id="order-custom-product"
+                            placeholder="➕ O ingresa un producto personalizado (opcional)..."
+                            oninput="onCustomProductInput()"
+                            style="padding: 8px 12px; font-size: 12px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.6); border: 1px dashed var(--border-color); color: var(--text-primary); box-sizing: border-box;">
                     </div>
                 </div>
 
                 <!-- Resumen Financiero y Precios del Pedido -->
-                <div class="order-financial-card" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 14px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                        <strong style="color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                <div class="order-financial-card"
+                    style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 14px;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <strong
+                            style="color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px;">
                             <span>💰</span> Resumen y Precios del Pedido
                         </strong>
-                        <button type="button" class="btn btn-secondary btn-small" onclick="syncOrderSuggestedPrice()" style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(16, 185, 129, 0.3); color: var(--success);" title="Restablecer el valor a cobrar al valor total sugerido">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="syncOrderSuggestedPrice()"
+                            style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(16, 185, 129, 0.3); color: var(--success);"
+                            title="Restablecer el valor a cobrar al valor total sugerido">
                             🔄 Igualar al Sugerido
                         </button>
                     </div>
-                    <div class="order-financial-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                    <div class="order-financial-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 11px; color: var(--text-secondary);">Cantidad</label>
-                            <input type="number" id="order-total-quantity" value="1" min="1" step="1" oninput="onOrderFinancialChange('qty')" style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center;">
+                            <input type="number" id="order-total-quantity" value="1" min="1" step="1"
+                                oninput="onOrderFinancialChange('qty')"
+                                style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center;">
                         </div>
                         <div class="form-group" style="margin: 0;">
-                            <label style="font-size: 11px; color: var(--text-secondary);">Val. Unit. Sugerido ($)</label>
-                            <input type="number" id="order-suggested-unit-price" value="0.00" min="0" step="0.01" oninput="onOrderFinancialChange('unit')" style="font-weight: 600; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: right;">
+                            <label style="font-size: 11px; color: var(--text-secondary);">Val. Unit. Sugerido
+                                ($)</label>
+                            <input type="number" id="order-suggested-unit-price" value="0.00" min="0" step="0.01"
+                                oninput="onOrderFinancialChange('unit')"
+                                style="font-weight: 600; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.8); border: 1px solid var(--border-color); color: var(--text-primary); text-align: right;">
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 11px; color: var(--text-secondary);">Valor Total Sugerido</label>
-                            <input type="text" id="order-suggested-total-price" value="$ 0.00" readonly style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.5); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: not-allowed; text-align: right;">
+                            <input type="text" id="order-suggested-total-price" value="$ 0.00" readonly
+                                style="font-weight: 700; font-size: 14px; padding: 8px; background: rgba(10, 12, 16, 0.5); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: not-allowed; text-align: right;">
                         </div>
                         <div class="form-group col-span-2-mobile" style="margin: 0;">
-                            <label style="font-size: 11px; color: var(--success); font-weight: 700;">Valor a Cobrar ($ ARS) *</label>
-                            <input type="number" id="order-final-price" value="0.00" min="0" step="0.01" oninput="this.dataset.userModified='true'" style="font-weight: 700; font-size: 15px; padding: 8px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.15); text-align: right;">
+                            <label style="font-size: 11px; color: var(--success); font-weight: 700;">Valor a Cobrar ($
+                                ARS) *</label>
+                            <input type="number" id="order-final-price" value="0.00" min="0" step="0.01"
+                                oninput="this.dataset.userModified='true'"
+                                style="font-weight: 700; font-size: 15px; padding: 8px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.15); text-align: right;">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeNewOrderModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveNewOrder()" style="width: auto; padding: 8px 16px;">Registrar Pedido</button>
+                <button class="btn btn-secondary" onclick="closeNewOrderModal()"
+                    style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveNewOrder()"
+                    style="width: auto; padding: 8px 16px;">Registrar Pedido</button>
             </div>
         </div>
     </div>
@@ -956,10 +1140,12 @@
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
                 <input type="hidden" id="dreq-edit-id" value="">
 
-                <div class="modal-grid-2col ratio-2-1" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                <div class="modal-grid-2col ratio-2-1"
+                    style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="dreq-name">Nombre del Producto / Modelo 3D *</label>
-                        <input type="text" id="dreq-name" placeholder="Ej. Soporte para Auriculares, Engranaje batidora" required>
+                        <input type="text" id="dreq-name" placeholder="Ej. Soporte para Auriculares, Engranaje batidora"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="dreq-client">Cliente / Contacto</label>
@@ -970,7 +1156,8 @@
                 <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label for="dreq-date">📅 Fecha de Solicitud</label>
-                        <input type="date" id="dreq-date" onkeydown="return false" onpaste="return false" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+                        <input type="date" id="dreq-date" onkeydown="return false" onpaste="return false"
+                            onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
                     </div>
                     <div class="form-group">
                         <label for="dreq-status">Estado</label>
@@ -983,20 +1170,29 @@
 
                 <div class="form-group">
                     <label for="dreq-description">Descripción u Observaciones</label>
-                    <textarea id="dreq-description" rows="3" placeholder="Detalles de diseño, dimensiones aproximadas, requerimientos de resistencia, color o notas del cliente..." style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 13px;"></textarea>
+                    <textarea id="dreq-description" rows="3"
+                        placeholder="Detalles de diseño, dimensiones aproximadas, requerimientos de resistencia, color o notas del cliente..."
+                        style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 13px;"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
-                        <label for="dreq-urls" style="margin-bottom: 0;">🌐 Enlaces para descargar STL / Páginas Web</label>
-                        <span style="font-size: 11px; color: var(--text-secondary);">Una o varias URLs (por línea o separadas por coma)</span>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                        <label for="dreq-urls" style="margin-bottom: 0;">🌐 Enlaces para descargar STL / Páginas
+                            Web</label>
+                        <span style="font-size: 11px; color: var(--text-secondary);">Una o varias URLs (por línea o
+                            separadas por coma)</span>
                     </div>
-                    <textarea id="dreq-urls" rows="3" placeholder="https://www.thingiverse.com/thing:...&#10;https://www.printables.com/model:...&#10;https://makerworld.com/es/models/..." style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: monospace; font-size: 12px;"></textarea>
+                    <textarea id="dreq-urls" rows="3"
+                        placeholder="https://www.thingiverse.com/thing:...&#10;https://www.printables.com/model:...&#10;https://makerworld.com/es/models/..."
+                        style="width: 100%; border-radius: 6px; padding: 10px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); resize: vertical; box-sizing: border-box; font-family: monospace; font-size: 12px;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeDesignRequestModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveDesignRequest()" style="width: auto; padding: 8px 16px;" id="btn-save-dreq">Registrar Solicitud</button>
+                <button class="btn btn-secondary" onclick="closeDesignRequestModal()"
+                    style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDesignRequest()" style="width: auto; padding: 8px 16px;"
+                    id="btn-save-dreq">Registrar Solicitud</button>
             </div>
         </div>
     </div>
@@ -1025,7 +1221,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="fil-color">Color</label>
                     <input type="text" id="fil-color" placeholder="Ej. Rojo Semáforo, Negro Mate">
@@ -1043,8 +1239,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAddFilamentModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveNewFilamentSpool()" style="width: auto; padding: 8px 16px;">Registrar Bobina</button>
+                <button class="btn btn-secondary" onclick="closeAddFilamentModal()"
+                    style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveNewFilamentSpool()"
+                    style="width: auto; padding: 8px 16px;">Registrar Bobina</button>
             </div>
         </div>
     </div>
@@ -1065,7 +1263,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="document.getElementById('modal-image-select').classList.remove('active')" style="width: auto; padding: 6px 12px;">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('modal-image-select').classList.remove('active')"
+                    style="width: auto; padding: 6px 12px;">
                     Cancelar
                 </button>
             </div>
@@ -1085,7 +1285,8 @@
                     <label for="edit-prod-title">Nombre del Producto</label>
                     <input type="text" id="edit-prod-title" placeholder="Ej. Maceta Robot Mini">
                 </div>
-                <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div class="modal-grid-2col"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
                         <label for="edit-prod-weight">Peso del Modelo (gramos)</label>
                         <input type="number" id="edit-prod-weight" min="1" step="1">
@@ -1107,8 +1308,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeEditInternalProductModal()" style="width: auto; padding: 8px 16px;">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveEditedInternalProduct()" style="width: auto; padding: 8px 16px;">Guardar Cambios</button>
+                <button class="btn btn-secondary" onclick="closeEditInternalProductModal()"
+                    style="width: auto; padding: 8px 16px;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveEditedInternalProduct()"
+                    style="width: auto; padding: 8px 16px;">Guardar Cambios</button>
             </div>
         </div>
     </div>
@@ -1118,8 +1321,10 @@
         <div class="modal-content animate-fade" style="max-width: 480px;">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;color:var(--jf-blue);">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" style="width:20px;height:20px;color:var(--jf-blue);">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <h3 id="view-prod-modal-title">Detalles del Producto</h3>
@@ -1130,8 +1335,10 @@
                 <!-- Injected dynamically -->
             </div>
             <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end;">
-                <button class="btn btn-secondary" onclick="closeViewInternalProductModal()" style="width: auto; padding: 8px 16px;">Cerrar</button>
-                <button class="btn btn-primary" id="view-prod-btn-edit" style="width: auto; padding: 8px 16px;">Editar Parámetros</button>
+                <button class="btn btn-secondary" onclick="closeViewInternalProductModal()"
+                    style="width: auto; padding: 8px 16px;">Cerrar</button>
+                <button class="btn btn-primary" id="view-prod-btn-edit" style="width: auto; padding: 8px 16px;">Editar
+                    Parámetros</button>
             </div>
         </div>
     </div>
@@ -1141,8 +1348,10 @@
         <div class="modal-content animate-fade" style="max-width: 520px;">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#3ecf8e;" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.416 13.916a.396.396 0 0 0 .313.64h9.362v8.958a.396.396 0 0 0 .716.233l10.868-13.753a.396.396 0 0 0-.313-.64z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#3ecf8e;"
+                        viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.416 13.916a.396.396 0 0 0 .313.64h9.362v8.958a.396.396 0 0 0 .716.233l10.868-13.753a.396.396 0 0 0-.313-.64z" />
                     </svg>
                     <h3>Base de Datos en la Nube (Supabase)</h3>
                 </div>
@@ -1150,32 +1359,161 @@
             </div>
             <div class="modal-body">
                 <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
-                    Conecta tu sistema a <strong>Supabase</strong> para sincronizar pedidos, bobinas y costos en tiempo real en la nube.
+                    Conecta tu sistema a <strong>Supabase</strong> para sincronizar pedidos, bobinas y costos en tiempo
+                    real en la nube.
                 </p>
-                
+
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label for="supabase-url">Project URL</label>
                     <input type="text" id="supabase-url" placeholder="https://xyzcompany.supabase.co">
-                    <small style="font-size: 10px; color: var(--text-muted);">Encuéntralo en Supabase: Project Settings &gt; API</small>
+                    <small style="font-size: 10px; color: var(--text-muted);">Encuéntralo en Supabase: Project Settings
+                        &gt; API</small>
                 </div>
-                
+
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label for="supabase-anon-key">Anon Public Key</label>
                     <input type="password" id="supabase-anon-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-                    <small style="font-size: 10px; color: var(--text-muted);">Clave pública (anon/public) en Project Settings &gt; API</small>
+                    <small style="font-size: 10px; color: var(--text-muted);">Clave pública (anon/public) en Project
+                        Settings &gt; API</small>
                 </div>
 
-                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 10px; font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">
-                    <strong>ℹ️ ¿Aún no creaste las tablas?</strong> Ejecuta el archivo <code style="color:var(--success);">supabase_schema.sql</code> que dejamos en tu proyecto en el <em>SQL Editor</em> de Supabase.
+                <div
+                    style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 10px; font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">
+                    <strong>ℹ️ ¿Aún no creaste las tablas?</strong> Ejecuta el archivo <code
+                        style="color:var(--success);">supabase_schema.sql</code> que dejamos en tu proyecto en el
+                    <em>SQL Editor</em> de Supabase.
                 </div>
             </div>
             <div class="modal-footer" style="display:flex; justify-content: space-between;">
-                <button class="btn btn-secondary" onclick="disconnectSupabase()" id="btn-disconnect-supabase" style="width: auto; padding: 8px 14px; color: var(--danger); border-color: rgba(239, 68, 68, 0.2); display: none;">
+                <button class="btn btn-secondary" onclick="disconnectSupabase()" id="btn-disconnect-supabase"
+                    style="width: auto; padding: 8px 14px; color: var(--danger); border-color: rgba(239, 68, 68, 0.2); display: none;">
                     Desconectar
                 </button>
                 <div style="display: flex; gap: 8px; margin-left: auto;">
-                    <button class="btn btn-secondary" onclick="closeSupabaseModal()" style="width: auto; padding: 8px 14px;">Cancelar</button>
-                    <button class="btn btn-primary" onclick="saveSupabaseConfig()" style="width: auto; padding: 8px 16px;">Conectar y Sincronizar</button>
+                    <button class="btn btn-secondary" onclick="closeSupabaseModal()"
+                        style="width: auto; padding: 8px 14px;">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveSupabaseConfig()"
+                        style="width: auto; padding: 8px 16px;">Conectar y Sincronizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. WHATSAPP AUTOMATIC NOTIFICATIONS MODAL (DIRECT ENGINE - 2 NUMBERS) -->
+    <div class="modal" id="modal-whatsapp-config">
+        <div class="modal-content animate-fade" style="max-width: 620px; max-height: 92vh; overflow-y: auto;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size: 20px;">📲</span>
+                    <h3>Alertas Automáticas de WhatsApp (Sin API Keys)</h3>
+                </div>
+                <button class="modal-close" onclick="closeWhatsAppModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                    Envía notificaciones automáticas en segundo plano a hasta <strong>2 números de WhatsApp en simultáneo</strong> sin abrir pestañas ni pedir claves externas.
+                </p>
+
+                <!-- Estado de Vinculación QR en vivo -->
+                <div id="wa-engine-status-card" style="background: rgba(37, 211, 102, 0.07); border: 1px solid rgba(37, 211, 102, 0.28); border-radius: 10px; padding: 14px; text-align: center;">
+                    <div id="wa-engine-loading" style="font-size: 12.5px; color: var(--text-secondary); padding: 10px;">
+                        ⏳ Verificando estado del motor de WhatsApp...
+                    </div>
+
+                    <div id="wa-engine-qr-box" style="display: none; flex-direction: column; align-items: center; gap: 10px;">
+                        <strong style="color: #25D366; font-size: 13px;">📱 Escanea este código QR por única vez desde tu WhatsApp</strong>
+                        <span style="font-size: 11.5px; color: var(--text-secondary); max-width: 440px;">
+                            En tu celular abre <strong>WhatsApp &gt; Dispositivos vinculados &gt; Vincular un dispositivo</strong> y apunta a este código. Quedará conectado de forma permanente.
+                        </span>
+                        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+                            <img id="wa-engine-qr-img" src="" alt="Código QR WhatsApp" style="width: 210px; height: 210px; display: block;">
+                        </div>
+                    </div>
+
+                    <div id="wa-engine-connected-box" style="display: none; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 22px;">✅</span>
+                            <div>
+                                <strong style="color: #25D366; font-size: 13px; display: block;">Motor de WhatsApp Conectado y Activo</strong>
+                                <span id="wa-engine-connected-info" style="font-size: 11.5px; color: var(--text-secondary);">Vinculado correctamente</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="logoutWhatsAppEngine()" style="width: auto; padding: 5px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239,68,68,0.25);">
+                            Desvincular
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Eventos a notificar -->
+                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <strong style="font-size: 12px; color: var(--text-primary); display: block; margin-bottom: 10px;">🔔 ¿Cuándo enviar notificación automática?</strong>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-orders" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                            <span>📦 Al registrar un <strong>Pedido Nuevo</strong></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-costs" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                            <span>🧮 Al calcular y guardar un <strong>Costo Nuevo</strong> en la Calculadora</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-dreq" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                            <span>🎨 Al ingresar una <strong>Solicitud de Diseño y Costeo</strong></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Destinatario 1 -->
+                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
+                            <input type="checkbox" id="wa-rec1-enabled" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                            <span>👤 Destinatario #1</span>
+                        </label>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(1)" style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
+                            📤 Probar Envío #1
+                        </button>
+                    </div>
+                    <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 10.5px;">Nombre / Referencia</label>
+                            <input type="text" id="wa-rec1-name" value="Principal" placeholder="Ej. Socio 1" style="font-size: 12px; padding: 7px 9px;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 10.5px;">Número de WhatsApp</label>
+                            <input type="text" id="wa-rec1-phone" value="+5491166123434" placeholder="Ej. 1166123434" style="font-size: 12px; padding: 7px 9px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destinatario 2 -->
+                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
+                            <input type="checkbox" id="wa-rec2-enabled" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                            <span>👤 Destinatario #2 (Opcional)</span>
+                        </label>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(2)" style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
+                            📤 Probar Envío #2
+                        </button>
+                    </div>
+                    <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 10.5px;">Nombre / Referencia</label>
+                            <input type="text" id="wa-rec2-name" placeholder="Ej. Socio 2" style="font-size: 12px; padding: 7px 9px;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 10.5px;">Número de WhatsApp</label>
+                            <input type="text" id="wa-rec2-phone" placeholder="Ej. 1199887766" style="font-size: 12px; padding: 7px 9px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="wa-config-feedback" style="font-size: 11.5px; color: var(--text-secondary);"></span>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn btn-secondary" onclick="closeWhatsAppModal()" style="width: auto; padding: 8px 14px;">Cerrar</button>
+                    <button class="btn btn-primary" onclick="saveWhatsAppConfig()" style="width: auto; padding: 8px 16px; background: #25D366; border-color: #25D366; color: #0a0c10; font-weight: 700;">Guardar Números</button>
                 </div>
             </div>
         </div>
@@ -1184,7 +1522,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=2.1"></script>
+    <script src="app.js?v=2.5"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {
@@ -1196,11 +1534,12 @@
                 fileObserver.disconnect();
             }
         });
-        
+
         const previewSheets = document.getElementById('preview-sheets');
         if (previewSheets) {
             fileObserver.observe(previewSheets, { childList: true });
         }
     </script>
 </body>
+
 </html>
