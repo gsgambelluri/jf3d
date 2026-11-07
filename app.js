@@ -867,17 +867,24 @@ function getWhatsAppSettings() {
 }
 
 window.fetchWhatsAppEngineStatus = async function () {
+    const loadingEl = document.getElementById('wa-engine-loading');
+    const loadingTextEl = document.getElementById('wa-engine-loading-text');
+    const qrBox = document.getElementById('wa-engine-qr-box');
+    const qrImg = document.getElementById('wa-engine-qr-img');
+    const connectedBox = document.getElementById('wa-engine-connected-box');
+    const connectedInfo = document.getElementById('wa-engine-connected-info');
+
     try {
         const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            if (qrBox) qrBox.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (loadingTextEl) loadingTextEl.textContent = '⚠️ El motor de WhatsApp requiere el servidor local activo (node server.js).';
+            return null;
+        }
         const data = await res.json();
         waEngineStatus = data.status || 'disconnected';
-
-        const loadingEl = document.getElementById('wa-engine-loading');
-        const qrBox = document.getElementById('wa-engine-qr-box');
-        const qrImg = document.getElementById('wa-engine-qr-img');
-        const connectedBox = document.getElementById('wa-engine-connected-box');
-        const connectedInfo = document.getElementById('wa-engine-connected-info');
 
         if (data.status === 'connected') {
             if (loadingEl) loadingEl.style.display = 'none';
@@ -896,26 +903,45 @@ window.fetchWhatsAppEngineStatus = async function () {
         } else {
             if (qrBox) qrBox.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
-            if (loadingEl) {
-                loadingEl.style.display = 'block';
-                loadingEl.textContent = '⏳ Generando código QR de vinculación con WhatsApp...';
-            }
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (loadingTextEl) loadingTextEl.textContent = '⏳ Generando código QR de vinculación con WhatsApp...';
         }
 
         updateWhatsAppStatusBadge();
         return data;
     } catch (e) {
+        if (qrBox) qrBox.style.display = 'none';
+        if (connectedBox) connectedBox.style.display = 'none';
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (loadingTextEl) loadingTextEl.textContent = '⚠️ Conectando con el servidor local de WhatsApp...';
         return null;
+    }
+};
+
+window.resetWhatsAppQr = async function () {
+    const loadingEl = document.getElementById('wa-engine-loading');
+    const loadingTextEl = document.getElementById('wa-engine-loading-text');
+    const qrBox = document.getElementById('wa-engine-qr-box');
+    const connectedBox = document.getElementById('wa-engine-connected-box');
+
+    if (qrBox) qrBox.style.display = 'none';
+    if (connectedBox) connectedBox.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (loadingTextEl) loadingTextEl.textContent = '🔄 Reiniciando sesión y generando nuevo código QR...';
+
+    try {
+        await fetch('/api/whatsapp/logout', { method: 'POST' });
+        showToast('Generando nuevo código QR de WhatsApp...');
+        setTimeout(() => fetchWhatsAppEngineStatus(), 1200);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 2500);
+    } catch (e) {
+        showToast('No se pudo contactar al servidor local.');
     }
 };
 
 window.logoutWhatsAppEngine = async function () {
     if (!confirm('¿Deseas desvincular la cuenta actual de WhatsApp y generar un nuevo código QR?')) return;
-    try {
-        await fetch('/api/whatsapp/logout', { method: 'POST' });
-        showToast('Sesión de WhatsApp reiniciada. Generando nuevo código QR...');
-        setTimeout(() => fetchWhatsAppEngineStatus(), 1200);
-    } catch (e) { }
+    await resetWhatsAppQr();
 };
 
 window.updateWhatsAppStatusBadge = function () {
