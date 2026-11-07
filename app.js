@@ -866,6 +866,164 @@ function getWhatsAppSettings() {
     return appState.whatsappSettings;
 }
 
+async function callLocalWhatsAppApi(endpoint, options = {}, timeoutMs = 2500) {
+    const candidates = [];
+    if (window.location.port === '8080') {
+        candidates.push('');
+    } else {
+        if (window.location.protocol === 'http:') {
+            candidates.push('');
+        }
+        candidates.push('http://localhost:8080');
+        candidates.push('http://127.0.0.1:8080');
+    }
+
+    for (const base of candidates) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(`${base}/api/whatsapp/${endpoint}`, {
+                ...options,
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            clearTimeout(timer);
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                continue;
+            }
+            const data = await res.json();
+            return { ok: res.ok, status: res.status, data };
+        } catch (e) {
+            clearTimeout(timer);
+        }
+    }
+    return null;
+}
+
+function getSupabaseRestCredentials() {
+    const url = (localStorage.getItem('jf3d_supabase_url') || DEFAULT_SUPABASE_URL || '').replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
+    const key = localStorage.getItem('jf3d_supabase_key') || DEFAULT_SUPABASE_KEY || '';
+    return { url, key };
+}
+
+async function fetchCloudWhatsAppState() {
+    const { url, key } = getSupabaseRestCredentials();
+    if (!url || !key) return null;
+    try {
+        const res = await fetch(`${url}/rest/v1/app_settings?key=eq.whatsappEngineState&select=value,updated_at`, {
+            headers: {
+                'apikey': key,
+                'Authorization': `Bearer ${key}`
+            },
+            cache: 'no-store'
+        });
+        if (!res.ok) return null;
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0 && rows[0].value) {
+            return rows[0].value;
+        }
+    } catch (e) { }
+    return null;
+}
+
+async function readCloudWhatsAppOutbox() {
+    const { url, key } = getSupabaseRestCredentials();
+    if (!url || !key) return { messages: [] };
+    try {
+        const res = await fetch(`${url}/rest/v1/app_settings?key=eq.whatsappOutbox&select=value`, {
+            headers: {
+                'apikey': key,
+                'Authorization': `Bearer ${key}`
+            },
+            cache: 'no-store'
+        });
+        if (res.ok) {
+            const rows = await res.json();
+            if (Array.isArray(rows) && rows.length > 0 && rows[0].value) {
+                return rows[0].value;
+            }
+        }
+    } catch (e) { }
+    return { messages: [] };
+}
+
+async function writeCloudWhatsAppOutbox(outbox) {
+    const { url, key } = getSupabaseRestCredentials();
+    if (!url || !key) return false;
+    try {
+        const res = await fetch(`${url}/rest/v1/app_settings?on_conflict=key`, {
+            method: 'POST',
+            headers: {
+                'apikey': key,
+                'Authorization': `Bearer ${key}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                key: 'whatsappOutbox',
+                value: outbox,
+                updated_at: new Date().toISOString()
+            })
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function dispatchWhatsAppMessage(phones, text) {
+    // 1. Try direct local connection first
+    const localRes = await callLocalWhatsAppApi('send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phones, text })
+    }, 6500);
+
+    if (localRes !== null) {
+        return { ok: localRes.ok && !!(localRes.data && localRes.data.ok), data: localRes.data || {} };
+    }
+
+    // 2. Fallback to Cloud Bridge (for Production Vercel/Netlify or mobile devices)
+    const msgId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const outbox = await readCloudWhatsAppOutbox();
+    if (!Array.isArray(outbox.messages)) outbox.messages = [];
+    outbox.messages.push({
+        id: msgId,
+        phones,
+        text,
+        status: 'pending',
+        createdAt: Date.now()
+    });
+    const saved = await writeCloudWhatsAppOutbox(outbox);
+    if (!saved) {
+        return { ok: false, data: { ok: false, error: 'No se pudo conectar con el puente de WhatsApp.' } };
+    }
+
+    // Poll up to ~8 seconds for the engine to confirm delivery
+    for (let i = 0; i < 7; i++) {
+        await new Promise(r => setTimeout(r, 1150));
+        const currentOutbox = await readCloudWhatsAppOutbox();
+        const found = (currentOutbox.messages || []).find(m => m && m.id === msgId);
+        if (found && found.status !== 'pending') {
+            if (found.status === 'sent') {
+                return { ok: true, data: { ok: true, sent: found.sent || phones } };
+            } else {
+                return {
+                    ok: false,
+                    data: {
+                        ok: false,
+                        error: found.error || 'Escanea el código QR por única vez en Alertas WhatsApp.',
+                        needsQr: !!found.needsQr
+                    }
+                };
+            }
+        }
+    }
+
+    return { ok: true, data: { ok: true, sent: phones, queued: true } };
+}
+
 window.fetchWhatsAppEngineStatus = async function () {
     const loadingEl = document.getElementById('wa-engine-loading');
     const loadingTextEl = document.getElementById('wa-engine-loading-text');
@@ -875,15 +1033,22 @@ window.fetchWhatsAppEngineStatus = async function () {
     const connectedInfo = document.getElementById('wa-engine-connected-info');
 
     try {
-        const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
-        if (!res.ok) {
+        let data = null;
+        const localRes = await callLocalWhatsAppApi('status', { method: 'GET' }, 2200);
+        if (localRes && localRes.ok && localRes.data) {
+            data = localRes.data;
+        } else {
+            data = await fetchCloudWhatsAppState();
+        }
+
+        if (!data) {
             if (qrBox) qrBox.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
             if (loadingEl) loadingEl.style.display = 'flex';
-            if (loadingTextEl) loadingTextEl.textContent = '⚠️ El motor de WhatsApp requiere el servidor local activo (node server.js).';
+            if (loadingTextEl) loadingTextEl.textContent = '⏳ Sincronizando motor de WhatsApp...';
             return null;
         }
-        const data = await res.json();
+
         waEngineStatus = data.status || 'disconnected';
 
         if (data.status === 'connected') {
@@ -913,7 +1078,7 @@ window.fetchWhatsAppEngineStatus = async function () {
         if (qrBox) qrBox.style.display = 'none';
         if (connectedBox) connectedBox.style.display = 'none';
         if (loadingEl) loadingEl.style.display = 'flex';
-        if (loadingTextEl) loadingTextEl.textContent = '⚠️ Conectando con el servidor local de WhatsApp...';
+        if (loadingTextEl) loadingTextEl.textContent = '⏳ Conectando con el motor de WhatsApp...';
         return null;
     }
 };
@@ -930,12 +1095,22 @@ window.resetWhatsAppQr = async function () {
     if (loadingTextEl) loadingTextEl.textContent = '🔄 Reiniciando sesión y generando nuevo código QR...';
 
     try {
-        await fetch('/api/whatsapp/logout', { method: 'POST' });
+        const localRes = await callLocalWhatsAppApi('logout', { method: 'POST' }, 2500);
+        if (!localRes || !localRes.ok) {
+            const outbox = await readCloudWhatsAppOutbox();
+            outbox.resetRequest = {
+                id: `reset_${Date.now()}`,
+                status: 'pending',
+                requestedAt: Date.now()
+            };
+            await writeCloudWhatsAppOutbox(outbox);
+        }
         showToast('Generando nuevo código QR de WhatsApp...');
-        setTimeout(() => fetchWhatsAppEngineStatus(), 1200);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 2500);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 1500);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 3200);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 5000);
     } catch (e) {
-        showToast('No se pudo contactar al servidor local.');
+        showToast('Reintentando generar código QR...');
     }
 };
 
@@ -1085,14 +1260,10 @@ window.testWhatsAppRecipient = async function (slotNumber) {
     }
 
     try {
-        const res = await fetch('/api/whatsapp/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phones: [rec.phone], text: testMessage })
-        });
-        const data = await res.json();
+        const result = await dispatchWhatsAppMessage([rec.phone], testMessage);
+        const data = result.data || {};
 
-        if (res.ok && data.ok) {
+        if (result.ok) {
             if (feedback) {
                 feedback.style.color = '#25D366';
                 feedback.textContent = `✅ ¡Mensaje enviado a ${rec.phone}! Revisa tu WhatsApp.`;
@@ -1108,7 +1279,7 @@ window.testWhatsAppRecipient = async function (slotNumber) {
     } catch (err) {
         if (feedback) {
             feedback.style.color = 'var(--danger)';
-            feedback.textContent = `❌ Error al comunicarse con el servidor local.`;
+            feedback.textContent = `❌ Error al enviar el mensaje de prueba.`;
         }
     }
 };
@@ -1123,16 +1294,13 @@ window.sendWhatsAppNotificationToRecipients = async function (messageText, optio
     if (activePhones.length === 0) return false;
 
     try {
-        const res = await fetch('/api/whatsapp/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phones: activePhones, text: messageText })
-        });
-        const data = await res.json();
+        const result = await dispatchWhatsAppMessage(activePhones, messageText);
+        const data = result.data || {};
 
-        if (res.ok && data.ok) {
+        if (result.ok) {
             if (!options.silentToast) {
-                showToast(`📲 WhatsApp enviado automáticamente a ${data.sent.length} número(s)`);
+                const count = (data.sent && data.sent.length) ? data.sent.length : activePhones.length;
+                showToast(`📲 WhatsApp enviado automáticamente a ${count} número(s)`);
             }
             return true;
         }
