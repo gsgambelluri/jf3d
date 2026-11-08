@@ -769,7 +769,7 @@ window.pushInternalProductToCloud = async function (prod) {
             profit_cost: prod.profitCost,
             suggested_price: prod.suggestedPrice,
             category: prod.category || 'Calculado',
-            image_src: (prod.imageSrc && prod.imageSrc.length < 50000) ? prod.imageSrc : ''
+            image_src: (prod.imageSrc && prod.imageSrc.length < 500000) ? prod.imageSrc : ''
         });
     } catch (e) { console.error('Cloud internal product upsert failed:', e); }
 };
@@ -789,7 +789,7 @@ window.pushPublicProductToCloud = async function (prod) {
             description: prod.description || '',
             price: prod.price || '$ 0.00',
             category: prod.category || 'General',
-            image_src: (prod.imageSrc && prod.imageSrc.length < 50000) ? prod.imageSrc : ''
+            image_src: (prod.imageSrc && prod.imageSrc.length < 500000) ? prod.imageSrc : ''
         });
     } catch (e) { console.error('Cloud public product upsert failed:', e); }
 };
@@ -972,13 +972,13 @@ async function writeCloudWhatsAppOutbox(outbox) {
     }
 }
 
-async function dispatchWhatsAppMessage(phones, text) {
+async function dispatchWhatsAppMessage(phones, text, imageDataUrl = null) {
     // 1. Try direct local connection first
     const localRes = await callLocalWhatsAppApi('send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phones, text })
-    }, 6500);
+        body: JSON.stringify({ phones, text, imageDataUrl })
+    }, 8000);
 
     if (localRes !== null) {
         return { ok: localRes.ok && !!(localRes.data && localRes.data.ok), data: localRes.data || {} };
@@ -992,6 +992,7 @@ async function dispatchWhatsAppMessage(phones, text) {
         id: msgId,
         phones,
         text,
+        imageDataUrl: imageDataUrl || null,
         status: 'pending',
         createdAt: Date.now()
     });
@@ -1294,7 +1295,7 @@ window.sendWhatsAppNotificationToRecipients = async function (messageText, optio
     if (activePhones.length === 0) return false;
 
     try {
-        const result = await dispatchWhatsAppMessage(activePhones, messageText);
+        const result = await dispatchWhatsAppMessage(activePhones, messageText, options.imageDataUrl || null);
         const data = result.data || {};
 
         if (result.ok) {
@@ -1326,6 +1327,25 @@ function formatDateDisplay(rawDate) {
     const parts = String(rawDate).split('-');
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
     return rawDate;
+}
+
+function findOrderProductImage(order) {
+    if (!order) return null;
+    const internalList = appState.internalProducts || [];
+    if (Array.isArray(order.items)) {
+        for (const it of order.items) {
+            const match = internalList.find(p => p.title && it.title && p.title.trim().toLowerCase() === it.title.trim().toLowerCase() && p.imageSrc);
+            if (match && match.imageSrc) return match.imageSrc;
+        }
+    }
+    if (Array.isArray(order.products)) {
+        for (const rawTitle of order.products) {
+            const cleanTitle = String(rawTitle || '').replace(/^\d+x\s*/, '').trim().toLowerCase();
+            const match = internalList.find(p => p.title && p.title.trim().toLowerCase() === cleanTitle && p.imageSrc);
+            if (match && match.imageSrc) return match.imageSrc;
+        }
+    }
+    return null;
 }
 
 function buildOrderWhatsAppMessage(order) {
@@ -1377,14 +1397,15 @@ window.notifyNewOrderWhatsApp = function (order) {
     const wa = getWhatsAppSettings();
     if (wa.notifyOnNewOrder === false) return;
     const msg = buildOrderWhatsAppMessage(order);
-    sendWhatsAppNotificationToRecipients(msg);
+    const imageDataUrl = findOrderProductImage(order);
+    sendWhatsAppNotificationToRecipients(msg, { imageDataUrl });
 };
 
 window.notifyNewCostWhatsApp = function (prod, isUpdate = false) {
     const wa = getWhatsAppSettings();
     if (wa.notifyOnNewCost === false) return;
     const msg = buildCostWhatsAppMessage(prod, isUpdate);
-    sendWhatsAppNotificationToRecipients(msg);
+    sendWhatsAppNotificationToRecipients(msg, { imageDataUrl: prod.imageSrc || null });
 };
 
 window.notifyNewDesignRequestWhatsApp = function (req) {
@@ -1441,21 +1462,28 @@ window.notifyCurrentCalculationWhatsApp = function () {
         suggestedPrice: suggestedPrice
     });
 
-    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
+    sendWhatsAppNotificationToRecipients(msg, {
+        manualFallback: true,
+        imageDataUrl: currentCalcProductImage || null
+    });
 };
 
 window.shareOrderWhatsApp = function (orderId) {
     const order = (appState.orders || []).find(o => o.id === orderId);
     if (!order) return;
     const msg = buildOrderWhatsAppMessage(order);
-    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
+    const imageDataUrl = findOrderProductImage(order);
+    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true, imageDataUrl });
 };
 
 window.shareInternalProductWhatsApp = function (prodId) {
     const prod = (appState.internalProducts || []).find(p => p.id === prodId);
     if (!prod) return;
     const msg = buildCostWhatsAppMessage(prod, false);
-    sendWhatsAppNotificationToRecipients(msg, { manualFallback: true });
+    sendWhatsAppNotificationToRecipients(msg, {
+        manualFallback: true,
+        imageDataUrl: prod.imageSrc || null
+    });
 };
 
 // --- INITIALIZE APPLICATION ---
@@ -3058,6 +3086,136 @@ window.recalculateInternalCatalog = function (options = {}) {
     }
 };
 
+let currentCalcProductImage = '';
+let currentEditProductImage = '';
+
+function compressProductImageFile(file, maxDim = 720, quality = 0.78) {
+    return new Promise((resolve, reject) => {
+        if (!file) return resolve('');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = () => resolve(e.target.result || '');
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function updateCalcProductImageUI(dataUrl, labelText) {
+    currentCalcProductImage = dataUrl || '';
+    const preview = document.getElementById('calc-prod-image-preview');
+    const label = document.getElementById('calc-prod-image-label');
+    const clearBtn = document.getElementById('btn-clear-calc-image');
+    const input = document.getElementById('calc-prod-image-input');
+
+    if (currentCalcProductImage) {
+        if (preview) {
+            preview.src = currentCalcProductImage;
+            preview.style.display = 'block';
+        }
+        if (label) {
+            label.style.color = '#25D366';
+            label.textContent = labelText || '✅ Foto lista para enviar por WhatsApp';
+        }
+        if (clearBtn) clearBtn.style.display = 'inline-flex';
+    } else {
+        if (preview) {
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+        if (label) {
+            label.style.color = 'var(--text-secondary)';
+            label.textContent = '📷 Sin foto adjunta';
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (input) input.value = '';
+    }
+}
+
+window.onCalcProductImageSelect = async function (event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+        const compressed = await compressProductImageFile(file);
+        updateCalcProductImageUI(compressed, `✅ ${file.name}`);
+    } catch (e) {
+        showToast('Error al cargar la imagen.');
+    }
+};
+
+window.clearCalcProductImage = function () {
+    updateCalcProductImageUI('');
+};
+
+function updateEditProductImageUI(dataUrl, labelText) {
+    currentEditProductImage = dataUrl || '';
+    const preview = document.getElementById('edit-prod-image-preview');
+    const label = document.getElementById('edit-prod-image-label');
+    const clearBtn = document.getElementById('btn-clear-edit-image');
+    const input = document.getElementById('edit-prod-image-input');
+
+    if (currentEditProductImage) {
+        if (preview) {
+            preview.src = currentEditProductImage;
+            preview.style.display = 'block';
+        }
+        if (label) {
+            label.style.color = '#25D366';
+            label.textContent = labelText || '✅ Foto cargada';
+        }
+        if (clearBtn) clearBtn.style.display = 'inline-flex';
+    } else {
+        if (preview) {
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+        if (label) {
+            label.style.color = 'var(--text-secondary)';
+            label.textContent = '📷 Sin foto adjunta';
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (input) input.value = '';
+    }
+}
+
+window.onEditProductImageSelect = async function (event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+        const compressed = await compressProductImageFile(file);
+        updateEditProductImageUI(compressed, `✅ ${file.name}`);
+    } catch (e) {
+        showToast('Error al cargar la imagen.');
+    }
+};
+
+window.clearEditProductImage = function () {
+    updateEditProductImageUI('');
+};
+
 // Saves calculated item directly to the Catálogo Interno
 window.pushCalculatedProductToCatalog = function () {
     const nameInput = document.getElementById('calc-prod-name');
@@ -3114,13 +3272,14 @@ window.pushCalculatedProductToCatalog = function () {
         profitCost: profitCost,
         suggestedPrice: suggestedPrice,
         category: 'Calculado',
-        imageSrc: appState.imagePool && appState.imagePool.length > 0 ? appState.imagePool[0].src : ""
+        imageSrc: currentCalcProductImage || (appState.imagePool && appState.imagePool.length > 0 ? appState.imagePool[0].src : "")
     };
 
     if (!appState.internalProducts) appState.internalProducts = [];
     appState.internalProducts.push(newProd);
 
     nameInput.value = '';
+    clearCalcProductImage();
 
     saveStateToStorage();
     renderInternalProductTable();
@@ -3160,8 +3319,17 @@ window.renderInternalProductTable = function () {
         const profit = prod.profitCost || 0;
         const suggested = prod.suggestedPrice || 0;
 
+        const thumbHtml = prod.imageSrc
+            ? `<img src="${prod.imageSrc}" alt="${prod.title}" style="width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0;">`
+            : `<div style="width:36px; height:36px; border-radius:6px; background:rgba(255,255,255,0.05); border:1px dashed var(--border-color); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--text-secondary); flex-shrink:0;" title="Sin foto">📷</div>`;
+
         tr.innerHTML = `
-            <td><strong>${prod.title}</strong></td>
+            <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ${thumbHtml}
+                    <strong>${prod.title}</strong>
+                </div>
+            </td>
             <td class="col-suggested" style="text-align: center;"><strong style="color:var(--success); font-size:14px;">$ ${suggested.toFixed(2)}</strong></td>
             <td class="col-time" style="text-align: center;">⏱️ ${hours.toFixed(1)}h</td>
             <td class="col-actions" style="text-align: center;">
@@ -3169,10 +3337,10 @@ window.renderInternalProductTable = function () {
                     <button class="btn btn-secondary btn-small btn-view-prod-action" onclick="openViewInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:var(--jf-blue); border-color:rgba(0,153,255,0.35);" title="Ver todos los datos y desglose de costos">
                         👁️ Ver
                     </button>
-                    <button class="btn btn-secondary btn-small" onclick="shareInternalProductWhatsApp('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:#25D366; border-color:rgba(37,211,102,0.35);" title="Enviar o reenviar costo por WhatsApp">
+                    <button class="btn btn-secondary btn-small" onclick="shareInternalProductWhatsApp('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto; color:#25D366; border-color:rgba(37,211,102,0.35);" title="Enviar o reenviar costo y foto por WhatsApp">
                         📲
                     </button>
-                    <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Editar dimensiones y parámetros">
+                    <button class="btn btn-secondary btn-small" onclick="openEditInternalProductModal('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Editar dimensiones, foto y parámetros">
                         Editar
                     </button>
                     <button class="btn btn-primary btn-small" onclick="publishProductToDigital('${prod.id}')" style="padding:4px 8px; font-size:11px; width:auto;" title="Publicar al catálogo de ventas">
@@ -3225,8 +3393,15 @@ window.openViewInternalProductModal = function (id) {
     const suggested = prod.suggestedPrice || 0;
 
     if (body) {
+        const imageSectionHtml = prod.imageSrc
+            ? `<div style="text-align:center; background:rgba(10,12,16,0.6); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+                   <img src="${prod.imageSrc}" alt="${prod.title}" style="max-width:100%; max-height:200px; object-fit:contain; border-radius:8px;">
+               </div>`
+            : '';
+
         body.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 14px;">
+                ${imageSectionHtml}
                 <!-- Main KPI Card -->
                 <div style="background: linear-gradient(135deg, rgba(236,72,153,0.12), rgba(0,153,255,0.12)); border: 1px solid rgba(0,153,255,0.3); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -3306,6 +3481,8 @@ window.openEditInternalProductModal = function (id) {
     document.getElementById('edit-prod-hours').value = prod.hours || 0;
     document.getElementById('edit-prod-markup').value = (prod.customMarkup !== undefined ? prod.customMarkup : prod.markupPercent) || 150;
 
+    updateEditProductImageUI(prod.imageSrc || '', prod.imageSrc ? '✅ Foto actual del producto' : '');
+
     const spoolSelect = document.getElementById('edit-prod-spool');
     if (spoolSelect) {
         spoolSelect.innerHTML = '<option value="">(Usar bobina activa de la calculadora)</option>';
@@ -3347,9 +3524,18 @@ window.saveEditedInternalProduct = function () {
     prod.weightGrams = weight;
     prod.hours = hours;
     prod.spoolId = spoolId;
+    prod.imageSrc = currentEditProductImage || '';
     if (!isNaN(markup) && markup >= 0) {
         prod.customMarkup = markup;
         prod.markupPercent = markup;
+    }
+
+    if (appState.products && appState.products.length > 0) {
+        const linked = appState.products.find(p => p.internalProdId === prod.id);
+        if (linked && prod.imageSrc) {
+            linked.imageSrc = prod.imageSrc;
+            if (typeof pushPublicProductToCloud === 'function') pushPublicProductToCloud(linked);
+        }
     }
 
     closeEditInternalProductModal();
