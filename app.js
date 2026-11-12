@@ -907,6 +907,8 @@ function getSupabaseRestCredentials() {
     return { url, key };
 }
 
+let waResettingUntil = 0;
+
 async function fetchCloudWhatsAppState() {
     const { url, key } = getSupabaseRestCredentials();
     if (!url || !key) return null;
@@ -925,6 +927,30 @@ async function fetchCloudWhatsAppState() {
         }
     } catch (e) { }
     return null;
+}
+
+async function writeCloudWhatsAppState(stateObj) {
+    const { url, key } = getSupabaseRestCredentials();
+    if (!url || !key) return false;
+    try {
+        const res = await fetch(`${url}/rest/v1/app_settings?on_conflict=key`, {
+            method: 'POST',
+            headers: {
+                'apikey': key,
+                'Authorization': `Bearer ${key}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                key: 'whatsappEngineState',
+                value: stateObj,
+                updated_at: new Date().toISOString()
+            })
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
 }
 
 async function readCloudWhatsAppOutbox() {
@@ -1022,7 +1048,14 @@ async function dispatchWhatsAppMessage(phones, text, imageDataUrl = null) {
         }
     }
 
-    return { ok: true, data: { ok: true, sent: phones, queued: true } };
+    return {
+        ok: false,
+        data: {
+            ok: false,
+            error: 'El motor de WhatsApp requiere vincular nuevamente el código QR.',
+            needsQr: true
+        }
+    };
 }
 
 window.fetchWhatsAppEngineStatus = async function () {
@@ -1040,6 +1073,11 @@ window.fetchWhatsAppEngineStatus = async function () {
             data = localRes.data;
         } else {
             data = await fetchCloudWhatsAppState();
+        }
+
+        // Ignore stale 'connected' state while a manual QR reset is in progress
+        if (Date.now() < waResettingUntil && data && data.status === 'connected') {
+            data = { status: 'connecting', qrDataUrl: null };
         }
 
         if (!data) {
@@ -1062,6 +1100,7 @@ window.fetchWhatsAppEngineStatus = async function () {
                     : 'Vinculado y listo para enviar en segundo plano';
             }
         } else if (data.status === 'qr' && data.qrDataUrl) {
+            waResettingUntil = 0;
             if (loadingEl) loadingEl.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
             if (qrBox) qrBox.style.display = 'flex';
@@ -1090,12 +1129,26 @@ window.resetWhatsAppQr = async function () {
     const qrBox = document.getElementById('wa-engine-qr-box');
     const connectedBox = document.getElementById('wa-engine-connected-box');
 
+    waResettingUntil = Date.now() + 6000;
+    waEngineStatus = 'connecting';
+    updateWhatsAppStatusBadge();
+
     if (qrBox) qrBox.style.display = 'none';
     if (connectedBox) connectedBox.style.display = 'none';
     if (loadingEl) loadingEl.style.display = 'flex';
-    if (loadingTextEl) loadingTextEl.textContent = '🔄 Reiniciando sesión y generando nuevo código QR...';
+    if (loadingTextEl) loadingTextEl.textContent = '🔄 Desvinculando sesión y generando nuevo código QR...';
 
     try {
+        // 1. Immediately clear any stale connected state in Supabase
+        await writeCloudWhatsAppState({
+            status: 'connecting',
+            qrDataUrl: null,
+            userPhone: null,
+            userName: null,
+            heartbeatAt: Date.now()
+        });
+
+        // 2. Trigger reset both locally and via Cloud Outbox
         const localRes = await callLocalWhatsAppApi('logout', { method: 'POST' }, 2500);
         if (!localRes || !localRes.ok) {
             const outbox = await readCloudWhatsAppOutbox();
@@ -1106,17 +1159,17 @@ window.resetWhatsAppQr = async function () {
             };
             await writeCloudWhatsAppOutbox(outbox);
         }
-        showToast('Generando nuevo código QR de WhatsApp...');
+
+        showToast('🔄 Sesion desvinculada. Generando nuevo código QR...');
         setTimeout(() => fetchWhatsAppEngineStatus(), 1500);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 3200);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 5000);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 3000);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 4800);
     } catch (e) {
         showToast('Reintentando generar código QR...');
     }
 };
 
 window.logoutWhatsAppEngine = async function () {
-    if (!confirm('¿Deseas desvincular la cuenta actual de WhatsApp y generar un nuevo código QR?')) return;
     await resetWhatsAppQr();
 };
 
