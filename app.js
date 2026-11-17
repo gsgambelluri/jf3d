@@ -3357,11 +3357,34 @@ window.pushCalculatedProductToCatalog = function () {
     if (typeof notifyNewCostWhatsApp === 'function') notifyNewCostWhatsApp(newProd, false);
 };
 
+window.clearInternalCatalogSearch = function () {
+    const searchInput = document.getElementById('internal-catalog-search');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    renderInternalProductTable();
+};
+
+function normalizeSearchStr(str) {
+    return String(str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+}
+
 // Render Catálogo Interno Tabular Sheet
 window.renderInternalProductTable = function () {
     const tbody = document.getElementById('calculator-internal-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
+
+    const searchInput = document.getElementById('internal-catalog-search');
+    const clearBtn = document.getElementById('btn-clear-internal-search');
+    const rawQuery = searchInput ? searchInput.value.trim() : '';
+    const query = normalizeSearchStr(rawQuery);
+    if (clearBtn) clearBtn.style.display = rawQuery ? 'block' : 'none';
 
     if (!appState.internalProducts || appState.internalProducts.length === 0) {
         tbody.innerHTML = `
@@ -3374,7 +3397,33 @@ window.renderInternalProductTable = function () {
         return;
     }
 
-    appState.internalProducts.forEach(prod => {
+    const filteredProducts = query
+        ? appState.internalProducts.filter(prod => {
+            const titleMatch = normalizeSearchStr(prod.title).includes(query);
+            let spoolText = '';
+            if (prod.spoolId && prod.spoolId !== 'default_12000_1000') {
+                const spool = (appState.inventory || []).find(s => s.id === prod.spoolId);
+                if (spool) spoolText = `${spool.brand} ${spool.material} ${spool.color}`;
+            }
+            const spoolMatch = normalizeSearchStr(spoolText).includes(query);
+            const priceMatch = String((prod.suggestedPrice || 0).toFixed(2)).includes(query);
+            const weightMatch = `${prod.weightGrams || 0}g`.includes(query);
+            return titleMatch || spoolMatch || priceMatch || weightMatch;
+        })
+        : appState.internalProducts;
+
+    if (filteredProducts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" style="text-align:center;color:var(--text-secondary);padding:30px;">
+                    No se encontraron productos en el catálogo interno que coincidan con "<strong>${rawQuery}</strong>".
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    filteredProducts.forEach(prod => {
         const tr = document.createElement('tr');
         tr.className = 'catalog-row-updated';
 

@@ -908,7 +908,19 @@
                                 locales. Se actualiza automáticamente al cambiar costos de insumos, luz, amortización o
                                 márgenes.</span>
                         </div>
-                        <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="text" id="internal-catalog-search"
+                                    placeholder="🔍 Buscar producto en catálogo interno..."
+                                    oninput="renderInternalProductTable()"
+                                    style="padding: 6px 28px 6px 11px; font-size: 12px; width: 250px; max-width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                                <button type="button" id="btn-clear-internal-search"
+                                    onclick="clearInternalCatalogSearch()"
+                                    title="Limpiar búsqueda"
+                                    style="display: none; position: absolute; right: 6px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 2px 4px; line-height: 1;">
+                                    ✕
+                                </button>
+                            </div>
                             <button type="button" class="btn btn-secondary btn-small"
                                 onclick="recalculateInternalCatalog({ showToast: true })"
                                 style="padding: 6px 12px; font-size: 11px; width: auto;"
@@ -1566,7 +1578,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=3.1"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {
