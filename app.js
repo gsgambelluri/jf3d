@@ -3738,6 +3738,13 @@ window.openNewOrderModal = function () {
     const modal = document.getElementById('modal-new-order');
     if (!modal) return;
 
+    const editIdEl = document.getElementById('order-edit-id');
+    if (editIdEl) editIdEl.value = '';
+    const titleEl = document.getElementById('modal-order-title');
+    if (titleEl) titleEl.textContent = 'Registrar Nuevo Pedido';
+    const saveBtnEl = document.getElementById('btn-save-order');
+    if (saveBtnEl) saveBtnEl.textContent = 'Registrar Pedido';
+
     document.getElementById('order-client').value = '';
     document.getElementById('order-payment').value = 'Pendiente';
 
@@ -3814,6 +3821,105 @@ window.openNewOrderModal = function () {
     }
 
     modal.classList.add('active');
+};
+
+window.openEditOrderModal = function (orderId) {
+    const order = (appState.orders || []).find(o => o.id === orderId);
+    if (!order) return;
+
+    // Initialize clean modal and product list first
+    openNewOrderModal();
+
+    const editIdEl = document.getElementById('order-edit-id');
+    if (editIdEl) editIdEl.value = order.id;
+    const titleEl = document.getElementById('modal-order-title');
+    if (titleEl) titleEl.textContent = `Editar Pedido #${order.id.slice(-4)}`;
+    const saveBtnEl = document.getElementById('btn-save-order');
+    if (saveBtnEl) saveBtnEl.textContent = 'Guardar Cambios';
+
+    document.getElementById('order-client').value = order.clientName || '';
+    document.getElementById('order-payment').value = order.payment || 'Pendiente';
+
+    const today = new Date().toISOString().split('T')[0];
+    const rawOrderDate = order.orderDate || (order.id && !isNaN(parseInt(order.id.replace('order_', ''))) ? new Date(parseInt(order.id.replace('order_', ''))).toISOString().split('T')[0] : order.date) || today;
+    const rawDeliveryDate = order.deliveryDate || order.date || rawOrderDate;
+
+    const orderDateEl = document.getElementById('order-date');
+    if (orderDateEl) orderDateEl.value = rawOrderDate;
+    const deliveryDateEl = document.getElementById('order-delivery-date');
+    if (deliveryDateEl) deliveryDateEl.value = rawDeliveryDate;
+
+    // Extract items to match against catalog checkboxes or custom product input
+    const parsedOrderItems = [];
+    if (Array.isArray(order.items) && order.items.length > 0) {
+        order.items.forEach(it => {
+            if (it && it.title) {
+                parsedOrderItems.push({
+                    title: String(it.title).trim(),
+                    quantity: Math.max(1, parseInt(it.quantity || 1, 10) || 1)
+                });
+            }
+        });
+    } else if (Array.isArray(order.products) && order.products.length > 0) {
+        order.products.forEach(rawStr => {
+            const str = String(rawStr || '').trim();
+            if (!str) return;
+            const match = str.match(/^(\d+)x\s+(.+)$/i);
+            if (match) {
+                parsedOrderItems.push({
+                    title: match[2].trim(),
+                    quantity: Math.max(1, parseInt(match[1], 10) || 1)
+                });
+            } else {
+                parsedOrderItems.push({
+                    title: str,
+                    quantity: 1
+                });
+            }
+        });
+    }
+
+    const unmatchedCustomTitles = [];
+    const domItems = Array.from(document.querySelectorAll('#order-product-list .order-product-item'));
+
+    parsedOrderItems.forEach(orderIt => {
+        const targetLower = orderIt.title.toLowerCase();
+        const matchingDom = domItems.find(domEl => (domEl.dataset.title || '').trim().toLowerCase() === targetLower);
+        if (matchingDom) {
+            const cb = matchingDom.querySelector('.order-prod-checkbox');
+            const qtyInput = matchingDom.querySelector('.order-prod-qty');
+            if (cb) cb.checked = true;
+            if (qtyInput) qtyInput.value = orderIt.quantity;
+            matchingDom.classList.add('selected');
+        } else {
+            unmatchedCustomTitles.push(orderIt.title);
+        }
+    });
+
+    const customProdInput = document.getElementById('order-custom-product');
+    if (customProdInput) {
+        customProdInput.value = unmatchedCustomTitles.join(', ');
+    }
+
+    const quantity = Number(order.quantity || 1);
+    const finalPrice = Number(order.finalPrice !== undefined ? order.finalPrice : (order.totalPrice || 0));
+    const suggestedTotal = Number(order.suggestedTotalPrice !== undefined ? order.suggestedTotalPrice : finalPrice);
+    const suggestedUnit = Number(order.suggestedUnitPrice !== undefined ? order.suggestedUnitPrice : (quantity > 0 ? (suggestedTotal / quantity) : 0));
+
+    const totalQtyInput = document.getElementById('order-total-quantity');
+    if (totalQtyInput) totalQtyInput.value = quantity;
+
+    const unitPriceInput = document.getElementById('order-suggested-unit-price');
+    if (unitPriceInput) unitPriceInput.value = suggestedUnit.toFixed(2);
+
+    const totalSugEl = document.getElementById('order-suggested-total-price');
+    if (totalSugEl) totalSugEl.value = `$ ${suggestedTotal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const finalPriceInput = document.getElementById('order-final-price');
+    if (finalPriceInput) {
+        finalPriceInput.value = finalPrice.toFixed(2);
+        finalPriceInput.dataset.userModified = Math.abs(finalPrice - suggestedTotal) > 0.01 ? 'true' : 'false';
+    }
 };
 
 window.recalculateOrderTotals = function () {
@@ -4012,6 +4118,35 @@ window.saveNewOrder = function () {
 
     const finalPriceInput = document.getElementById('order-final-price');
     const finalPrice = Math.max(0, parseFloat(finalPriceInput?.value || suggestedTotalPrice) || 0);
+    const editId = (document.getElementById('order-edit-id')?.value || '').trim();
+
+    if (!appState.orders) appState.orders = [];
+
+    if (editId) {
+        const existingOrder = appState.orders.find(o => o.id === editId);
+        if (existingOrder) {
+            existingOrder.clientName = clientName;
+            existingOrder.orderDate = orderDate;
+            existingOrder.date = deliveryDate;
+            existingOrder.deliveryDate = deliveryDate;
+            existingOrder.quantity = totalQuantity;
+            existingOrder.suggestedUnitPrice = Number(suggestedUnitPrice.toFixed(2));
+            existingOrder.suggestedTotalPrice = Number(suggestedTotalPrice.toFixed(2));
+            existingOrder.finalPrice = Number(finalPrice.toFixed(2));
+            existingOrder.totalPrice = Number(finalPrice.toFixed(2));
+            existingOrder.products = productsStrings;
+            existingOrder.items = checkedItems;
+            existingOrder.payment = payment;
+
+            saveStateToStorage();
+            renderOrdersTable();
+            updateDashboardData();
+            closeNewOrderModal();
+            if (typeof pushOrderToCloud === 'function') pushOrderToCloud(existingOrder);
+            showToast('Pedido actualizado con éxito.');
+            return;
+        }
+    }
 
     const newOrder = {
         id: `order_${Date.now()}`,
@@ -4031,7 +4166,6 @@ window.saveNewOrder = function () {
         filamentDeducted: false
     };
 
-    if (!appState.orders) appState.orders = [];
     appState.orders.push(newOrder);
 
     saveStateToStorage();
@@ -4137,6 +4271,9 @@ window.renderOrdersTable = function () {
                 <div style="display:inline-flex; gap:6px; align-items:center;">
                     <button class="btn btn-secondary btn-small" onclick="shareOrderWhatsApp('${order.id}')" style="background:rgba(37,211,102,0.08); color:#25D366; border:1px solid rgba(37,211,102,0.3); width:auto; padding:4px 8px;" title="Enviar o reenviar resumen por WhatsApp">
                         📲
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="openEditOrderModal('${order.id}')" style="width:auto; padding:4px 8px;" title="Editar pedido">
+                        ✏️ Editar
                     </button>
                     <button class="btn btn-secondary btn-small" onclick="deleteOrder('${order.id}')" style="background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,0.2); width:auto;" title="Eliminar pedido">
                         Eliminar

@@ -1042,14 +1042,15 @@
 
     <!-- --- GLOBAL DIALOG MODALS --- -->
 
-    <!-- 1. NEW ORDER MODAL -->
+    <!-- 1. NEW / EDIT ORDER MODAL -->
     <div class="modal" id="modal-new-order">
         <div class="modal-content animate-fade" style="max-width: 680px; max-height: 92vh; overflow-y: auto;">
             <div class="modal-header">
-                <h3>Registrar Nuevo Pedido</h3>
+                <h3 id="modal-order-title">Registrar Nuevo Pedido</h3>
                 <button class="modal-close" onclick="closeNewOrderModal()">&times;</button>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <input type="hidden" id="order-edit-id" value="">
                 <!-- Cliente y Estado de Pago -->
                 <div class="modal-grid-2col ratio-2-1"
                     style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
@@ -1154,7 +1155,7 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeNewOrderModal()"
                     style="width: auto; padding: 8px 16px;">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveNewOrder()"
+                <button class="btn btn-primary" onclick="saveNewOrder()" id="btn-save-order"
                     style="width: auto; padding: 8px 16px;">Registrar Pedido</button>
             </div>
         </div>
@@ -1578,7 +1579,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=3.1"></script>
+    <script src="app.js?v=3.2"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {
