@@ -1068,16 +1068,18 @@ window.fetchWhatsAppEngineStatus = async function () {
 
     try {
         let data = null;
-        const localRes = await callLocalWhatsAppApi('status', { method: 'GET' }, 2200);
+        let isFromCloud = false;
+        const localRes = await callLocalWhatsAppApi('status', { method: 'GET' }, 1800);
         if (localRes && localRes.ok && localRes.data) {
             data = localRes.data;
         } else {
             data = await fetchCloudWhatsAppState();
+            isFromCloud = true;
         }
 
-        // Ignore stale 'connected' state while a manual QR reset is in progress
+        // Ignore stale 'connected' or old 'qr' state while a manual QR reset is in progress
         if (Date.now() < waResettingUntil && data && data.status === 'connected') {
-            data = { status: 'connecting', qrDataUrl: null };
+            data = { status: 'connecting', qrDataUrl: null, heartbeatAt: Date.now() };
         }
 
         if (!data) {
@@ -1085,6 +1087,19 @@ window.fetchWhatsAppEngineStatus = async function () {
             if (connectedBox) connectedBox.style.display = 'none';
             if (loadingEl) loadingEl.style.display = 'flex';
             if (loadingTextEl) loadingTextEl.textContent = '⏳ Sincronizando motor de WhatsApp...';
+            return null;
+        }
+
+        // If reading from Cloud Bridge and heartbeat is older than 35 seconds, the local PC motor is not running
+        if (isFromCloud && data.heartbeatAt && (Date.now() - data.heartbeatAt > 35000) && Date.now() > waResettingUntil) {
+            waEngineStatus = 'disconnected';
+            if (qrBox) qrBox.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (loadingTextEl) {
+                loadingTextEl.textContent = '⚠️ El motor de WhatsApp en la PC está detenido. Abre "iniciar-motor-whatsapp.vbs" (o node server.js) para activarlo.';
+            }
+            updateWhatsAppStatusBadge();
             return null;
         }
 
@@ -1129,7 +1144,7 @@ window.resetWhatsAppQr = async function () {
     const qrBox = document.getElementById('wa-engine-qr-box');
     const connectedBox = document.getElementById('wa-engine-connected-box');
 
-    waResettingUntil = Date.now() + 6000;
+    waResettingUntil = Date.now() + 5000;
     waEngineStatus = 'connecting';
     updateWhatsAppStatusBadge();
 
@@ -1139,31 +1154,32 @@ window.resetWhatsAppQr = async function () {
     if (loadingTextEl) loadingTextEl.textContent = '🔄 Desvinculando sesión y generando nuevo código QR...';
 
     try {
-        // 1. Immediately clear any stale connected state in Supabase
-        await writeCloudWhatsAppState({
-            status: 'connecting',
-            qrDataUrl: null,
-            userPhone: null,
-            userName: null,
-            heartbeatAt: Date.now()
-        });
+        // Trigger local logout, cloud state clear, and cloud outbox reset simultaneously in parallel
+        await Promise.allSettled([
+            callLocalWhatsAppApi('logout', { method: 'POST' }, 2000),
+            writeCloudWhatsAppState({
+                status: 'connecting',
+                qrDataUrl: null,
+                userPhone: null,
+                userName: null,
+                heartbeatAt: Date.now()
+            }),
+            (async () => {
+                const outbox = await readCloudWhatsAppOutbox();
+                outbox.resetRequest = {
+                    id: `reset_${Date.now()}`,
+                    status: 'pending',
+                    requestedAt: Date.now()
+                };
+                await writeCloudWhatsAppOutbox(outbox);
+            })()
+        ]);
 
-        // 2. Trigger reset both locally and via Cloud Outbox
-        const localRes = await callLocalWhatsAppApi('logout', { method: 'POST' }, 2500);
-        if (!localRes || !localRes.ok) {
-            const outbox = await readCloudWhatsAppOutbox();
-            outbox.resetRequest = {
-                id: `reset_${Date.now()}`,
-                status: 'pending',
-                requestedAt: Date.now()
-            };
-            await writeCloudWhatsAppOutbox(outbox);
-        }
-
-        showToast('🔄 Sesion desvinculada. Generando nuevo código QR...');
-        setTimeout(() => fetchWhatsAppEngineStatus(), 1500);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 3000);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 4800);
+        showToast('🔄 Sesión desvinculada. Generando nuevo código QR...');
+        setTimeout(() => fetchWhatsAppEngineStatus(), 900);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 2000);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 3400);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 5200);
     } catch (e) {
         showToast('Reintentando generar código QR...');
     }
