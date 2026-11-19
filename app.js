@@ -3217,7 +3217,7 @@ function updateCalcProductImageUI(dataUrl, labelText) {
         }
         if (label) {
             label.style.color = 'var(--text-secondary)';
-            label.textContent = '📷 Sin foto adjunta';
+            label.innerHTML = '📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)';
         }
         if (clearBtn) clearBtn.style.display = 'none';
         if (input) input.value = '';
@@ -3263,7 +3263,7 @@ function updateEditProductImageUI(dataUrl, labelText) {
         }
         if (label) {
             label.style.color = 'var(--text-secondary)';
-            label.textContent = '📷 Sin foto adjunta';
+            label.innerHTML = '📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)';
         }
         if (clearBtn) clearBtn.style.display = 'none';
         if (input) input.value = '';
@@ -3284,6 +3284,113 @@ window.onEditProductImageSelect = async function (event) {
 window.clearEditProductImage = function () {
     updateEditProductImageUI('');
 };
+
+async function applyPastedOrDroppedProductImage(fileOrBlob, targetMode = 'calc', sourceLabel = 'Imagen pegada') {
+    if (!fileOrBlob) return false;
+    try {
+        const compressed = await compressProductImageFile(fileOrBlob);
+        if (!compressed) return false;
+        if (targetMode === 'edit') {
+            updateEditProductImageUI(compressed, `✅ ${sourceLabel}`);
+        } else {
+            updateCalcProductImageUI(compressed, `✅ ${sourceLabel}`);
+        }
+        showToast('📸 Imagen pegada correctamente');
+        return true;
+    } catch (e) {
+        showToast('Error al procesar la imagen pegada.');
+        return false;
+    }
+}
+
+function extractImageFromClipboardData(clipboardData) {
+    if (!clipboardData) return null;
+    if (clipboardData.items && clipboardData.items.length > 0) {
+        for (let i = 0; i < clipboardData.items.length; i++) {
+            const item = clipboardData.items[i];
+            if (item.type && item.type.startsWith('image/')) {
+                const blob = item.getAsFile();
+                if (blob) return blob;
+            }
+        }
+    }
+    if (clipboardData.files && clipboardData.files.length > 0) {
+        for (let i = 0; i < clipboardData.files.length; i++) {
+            const file = clipboardData.files[i];
+            if (file.type && file.type.startsWith('image/')) {
+                return file;
+            }
+        }
+    }
+    return null;
+}
+
+window.handleProductImagePaste = async function (event, targetMode = 'calc') {
+    const blob = extractImageFromClipboardData(event?.clipboardData);
+    if (!blob) return;
+    event.preventDefault();
+    event.stopPropagation();
+    await applyPastedOrDroppedProductImage(blob, targetMode, 'Imagen pegada del portapapeles');
+};
+
+window.handleProductImageDrop = async function (event, targetMode = 'calc') {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropzone = event.currentTarget;
+    if (dropzone) dropzone.style.borderColor = 'var(--border-color)';
+    const files = event?.dataTransfer?.files;
+    if (files && files.length > 0) {
+        const imgFile = Array.from(files).find(f => f.type && f.type.startsWith('image/'));
+        if (imgFile) {
+            await applyPastedOrDroppedProductImage(imgFile, targetMode, imgFile.name || 'Imagen arrastrada');
+        }
+    }
+};
+
+window.pasteProductImageFromButton = async function (targetMode = 'calc') {
+    if (navigator.clipboard && typeof navigator.clipboard.read === 'function') {
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+            for (const item of clipboardItems) {
+                const imgType = (item.types || []).find(t => t.startsWith('image/'));
+                if (imgType) {
+                    const blob = await item.getType(imgType);
+                    if (blob) {
+                        await applyPastedOrDroppedProductImage(blob, targetMode, 'Imagen pegada del portapapeles');
+                        return;
+                    }
+                }
+            }
+            showToast('⚠️ No hay ninguna imagen copiada en el portapapeles.');
+            return;
+        } catch (err) {
+            // If browser permission prompt was denied or unsupported, focus the dropzone so Ctrl+V works
+        }
+    }
+    const zoneId = targetMode === 'edit' ? 'edit-prod-image-dropzone' : 'calc-prod-image-dropzone';
+    const zone = document.getElementById(zoneId);
+    if (zone) zone.focus();
+    showToast('Presiona Ctrl + V en tu teclado para pegar la imagen.');
+};
+
+// Global paste listener so pressing Ctrl+V anywhere in the Cost Calculator or Edit Modal pastes the copied image
+document.addEventListener('paste', async (event) => {
+    const blob = extractImageFromClipboardData(event?.clipboardData);
+    if (!blob) return;
+
+    const editModal = document.getElementById('modal-edit-internal-product');
+    if (editModal && editModal.classList.contains('active')) {
+        event.preventDefault();
+        await applyPastedOrDroppedProductImage(blob, 'edit', 'Imagen pegada del portapapeles');
+        return;
+    }
+
+    const calcView = document.getElementById('view-calculator');
+    if (calcView && calcView.classList.contains('active')) {
+        event.preventDefault();
+        await applyPastedOrDroppedProductImage(blob, 'calc', 'Imagen pegada del portapapeles');
+    }
+});
 
 // Saves calculated item directly to the Catálogo Interno
 window.pushCalculatedProductToCatalog = function () {

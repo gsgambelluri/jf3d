@@ -868,13 +868,24 @@
                             <div class="form-group" style="margin-bottom:12px;">
                                 <label style="font-size:10px;">Foto del Producto (se enviará por WhatsApp)</label>
                                 <input type="file" id="calc-prod-image-input" accept="image/*" style="display:none;" onchange="onCalcProductImageSelect(event)">
-                                <div style="display:flex; align-items:center; gap:10px; background:rgba(10, 12, 16, 0.6); border:1px dashed var(--border-color); border-radius:8px; padding:8px 10px;">
+                                <div id="calc-prod-image-dropzone" tabindex="0"
+                                    onpaste="handleProductImagePaste(event, 'calc')"
+                                    ondragover="event.preventDefault(); this.style.borderColor='#25D366';"
+                                    ondragleave="this.style.borderColor='var(--border-color)';"
+                                    ondrop="handleProductImageDrop(event, 'calc')"
+                                    style="display:flex; align-items:center; gap:10px; background:rgba(10, 12, 16, 0.6); border:1px dashed var(--border-color); border-radius:8px; padding:8px 10px; outline:none; transition:border-color 0.2s;"
+                                    onfocus="this.style.borderColor='var(--jf-blue)'"
+                                    onblur="this.style.borderColor='var(--border-color)'"
+                                    title="Haz clic aquí y presiona Ctrl+V para pegar una imagen, o usa los botones">
                                     <img id="calc-prod-image-preview" src="" alt="Vista previa" style="width:46px; height:46px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
                                     <div style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                                        <span id="calc-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto adjunta</span>
-                                        <div style="display:flex; gap:6px;">
+                                        <span id="calc-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)</span>
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                            <button type="button" class="btn btn-secondary btn-small" onclick="pasteProductImageFromButton('calc')" style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);" title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
+                                                📋 Pegar
+                                            </button>
                                             <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('calc-prod-image-input').click()" style="width:auto; padding:4px 10px; font-size:11px;">
-                                                📷 Adjuntar Foto
+                                                📷 Adjuntar
                                             </button>
                                             <button type="button" id="btn-clear-calc-image" class="btn btn-secondary btn-small" onclick="clearCalcProductImage()" style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;" title="Quitar foto">
                                                 ✕
@@ -1340,13 +1351,24 @@
                 <div class="form-group" style="margin-bottom: 6px;">
                     <label>Foto del Producto (se envía por WhatsApp)</label>
                     <input type="file" id="edit-prod-image-input" accept="image/*" style="display:none;" onchange="onEditProductImageSelect(event)">
-                    <div style="display:flex; align-items:center; gap:10px; background:rgba(10, 12, 16, 0.6); border:1px dashed var(--border-color); border-radius:8px; padding:8px 10px;">
+                    <div id="edit-prod-image-dropzone" tabindex="0"
+                        onpaste="handleProductImagePaste(event, 'edit')"
+                        ondragover="event.preventDefault(); this.style.borderColor='#25D366';"
+                        ondragleave="this.style.borderColor='var(--border-color)';"
+                        ondrop="handleProductImageDrop(event, 'edit')"
+                        style="display:flex; align-items:center; gap:10px; background:rgba(10, 12, 16, 0.6); border:1px dashed var(--border-color); border-radius:8px; padding:8px 10px; outline:none; transition:border-color 0.2s;"
+                        onfocus="this.style.borderColor='var(--jf-blue)'"
+                        onblur="this.style.borderColor='var(--border-color)'"
+                        title="Haz clic aquí y presiona Ctrl+V para pegar una imagen, o usa los botones">
                         <img id="edit-prod-image-preview" src="" alt="Vista previa" style="width:48px; height:48px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
                         <div style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                            <span id="edit-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto adjunta</span>
-                            <div style="display:flex; gap:6px;">
+                            <span id="edit-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)</span>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-secondary btn-small" onclick="pasteProductImageFromButton('edit')" style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);" title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
+                                    📋 Pegar
+                                </button>
                                 <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('edit-prod-image-input').click()" style="width:auto; padding:4px 10px; font-size:11px;">
-                                    📷 Cambiar Foto
+                                    📷 Adjuntar
                                 </button>
                                 <button type="button" id="btn-clear-edit-image" class="btn btn-secondary btn-small" onclick="clearEditProductImage()" style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;" title="Quitar foto">
                                     ✕
@@ -1579,7 +1601,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=3.2"></script>
+    <script src="app.js?v=3.3"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {
