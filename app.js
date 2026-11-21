@@ -867,20 +867,40 @@ function getWhatsAppSettings() {
 }
 
 async function callLocalWhatsAppApi(endpoint, options = {}, timeoutMs = 2500) {
+    const wa = getWhatsAppSettings();
+    const mode = wa.engineMode || 'auto';
+    const customUrl = (wa.customServerUrl || '').trim().replace(/\/+$/, '');
     const candidates = [];
+
+    const [actionName, queryRest] = endpoint.split('?');
+    const extraQuery = queryRest ? `&${queryRest}` : '';
+
+    const addBaseCandidates = (base, timeout) => {
+        candidates.push({ url: `${base}/api/whatsapp?action=${actionName}${extraQuery}`, timeout, base: base || 'cloud' });
+        candidates.push({ url: `${base}/api/whatsapp/${endpoint}`, timeout, base: base || 'cloud' });
+    };
+
+    if (customUrl && mode !== 'cloud') {
+        addBaseCandidates(customUrl, 2500);
+    }
+
     if (window.location.port === '8080') {
-        candidates.push({ base: '', timeout: Math.max(timeoutMs, 4000) });
+        addBaseCandidates('', Math.max(timeoutMs, 5500));
     } else {
-        candidates.push({ base: 'http://localhost:8080', timeout: 1600 });
-        candidates.push({ base: 'http://127.0.0.1:8080', timeout: 1200 });
-        candidates.push({ base: '', timeout: Math.max(timeoutMs, 8500) });
+        if (mode !== 'cloud') {
+            addBaseCandidates('http://localhost:8080', 1800);
+            addBaseCandidates('http://127.0.0.1:8080', 1200);
+        }
+        if (mode !== 'local') {
+            addBaseCandidates('', Math.max(timeoutMs, 9000));
+        }
     }
 
     for (const cand of candidates) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), cand.timeout);
         try {
-            const res = await fetch(`${cand.base}/api/whatsapp/${endpoint}`, {
+            const res = await fetch(cand.url, {
                 ...options,
                 cache: 'no-store',
                 signal: controller.signal
@@ -907,7 +927,7 @@ async function ensureCloudPairingListener() {
 
     isCloudPairWatcherRunning = true;
     try {
-        const res = await fetch('/api/whatsapp/pair', { cache: 'no-store' });
+        const res = await fetch('/api/whatsapp?action=pair', { cache: 'no-store' });
         if (res.ok) {
             const data = await res.json();
             if (data && data.status === 'connected') {
@@ -917,6 +937,41 @@ async function ensureCloudPairingListener() {
     } catch (e) {
     } finally {
         isCloudPairWatcherRunning = false;
+    }
+}
+
+async function updateWhatsAppDiagnosticBar(data, channelSource) {
+    const badgeEl = document.getElementById('wa-diag-status-badge');
+    const channelEl = document.getElementById('wa-diag-channel');
+    const queueEl = document.getElementById('wa-diag-queue');
+
+    if (badgeEl) {
+        if (data && data.status === 'connected') {
+            badgeEl.textContent = '🟢 Conectado y Activo';
+            badgeEl.style.color = '#25D366';
+            badgeEl.style.background = 'rgba(37, 211, 102, 0.15)';
+        } else if (data && data.status === 'qr' && data.qrDataUrl) {
+            badgeEl.textContent = '📱 Código QR Listo';
+            badgeEl.style.color = '#38bdf8';
+            badgeEl.style.background = 'rgba(56, 189, 248, 0.15)';
+        } else {
+            badgeEl.textContent = '🔄 Generando / Conectando...';
+            badgeEl.style.color = '#f59e0b';
+            badgeEl.style.background = 'rgba(245, 158, 11, 0.15)';
+        }
+    }
+
+    if (channelEl) {
+        const isLocal = (data && data.mode === 'local') || (channelSource && channelSource.includes('localhost')) || window.location.port === '8080';
+        channelEl.textContent = isLocal ? '⚡ Canal: Motor Local' : '☁️ Canal: Nube Productiva';
+    }
+
+    if (queueEl) {
+        try {
+            const outbox = await readCloudWhatsAppOutbox();
+            const pendingCount = (outbox.messages || []).filter(m => m && m.status === 'pending').length;
+            queueEl.textContent = `📬 Cola: ${pendingCount}`;
+        } catch (e) { }
     }
 }
 
@@ -1077,7 +1132,7 @@ async function dispatchWhatsAppMessage(phones, text, imageDataUrl = null) {
     };
 }
 
-window.fetchWhatsAppEngineStatus = async function () {
+window.fetchWhatsAppEngineStatus = async function (opts = {}) {
     const loadingEl = document.getElementById('wa-engine-loading');
     const loadingTextEl = document.getElementById('wa-engine-loading-text');
     const qrBox = document.getElementById('wa-engine-qr-box');
@@ -1085,12 +1140,19 @@ window.fetchWhatsAppEngineStatus = async function () {
     const connectedBox = document.getElementById('wa-engine-connected-box');
     const connectedInfo = document.getElementById('wa-engine-connected-info');
 
+    if (opts.manual) {
+        showToast('🔍 Verificando estado del motor de WhatsApp...');
+    }
+
     try {
         let data = null;
         let isFromCloud = false;
-        const localRes = await callLocalWhatsAppApi('status', { method: 'GET' }, 1800);
+        let channelBase = '';
+        const statusEndpoint = opts.manual ? 'status?fresh=1' : 'status';
+        const localRes = await callLocalWhatsAppApi(statusEndpoint, { method: 'GET' }, opts.manual ? 7500 : 2500);
         if (localRes && localRes.ok && localRes.data) {
             data = localRes.data;
+            channelBase = localRes.base || '';
         } else {
             data = await fetchCloudWhatsAppState();
             isFromCloud = true;
@@ -1101,18 +1163,30 @@ window.fetchWhatsAppEngineStatus = async function () {
             data = { status: 'connecting', qrDataUrl: null, heartbeatAt: Date.now() };
         }
 
+        const wa = getWhatsAppSettings();
+        const autoHeal = wa.autoHeal !== false;
+
+        // If reading from Cloud Bridge and state is missing or stale (>40s) and not connected, auto-heal by requesting fresh status/QR
+        if (isFromCloud && (!data || (data.status !== 'connected' && (!data.heartbeatAt || (Date.now() - data.heartbeatAt > 40000)))) && Date.now() > waResettingUntil) {
+            if (autoHeal) {
+                const freshRes = await callLocalWhatsAppApi('status?fresh=1', { method: 'GET' }, 8500);
+                if (freshRes && freshRes.ok && freshRes.data) {
+                    data = freshRes.data;
+                    isFromCloud = false;
+                } else {
+                    ensureCloudPairingListener();
+                }
+            }
+        }
+
+        updateWhatsAppDiagnosticBar(data, channelBase);
+
         if (!data) {
             if (qrBox) qrBox.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
             if (loadingEl) loadingEl.style.display = 'flex';
-            if (loadingTextEl) loadingTextEl.textContent = '⏳ Sincronizando motor de WhatsApp...';
+            if (loadingTextEl) loadingTextEl.textContent = '⏳ Inicializando motor de WhatsApp... Usa "🔄 Nuevo Código QR" o "🧹 Reparar Todo" abajo si demora.';
             return null;
-        }
-
-        // If reading from Cloud Bridge and state is stale (>45s) and not connected, ask serverless /api/whatsapp/status to generate a fresh QR
-        if (isFromCloud && data.status !== 'connected' && (!data.heartbeatAt || (Date.now() - data.heartbeatAt > 45000)) && Date.now() > waResettingUntil) {
-            ensureCloudPairingListener();
-            data = { status: 'connecting', qrDataUrl: null };
         }
 
         waEngineStatus = data.status || 'disconnected';
@@ -1126,6 +1200,7 @@ window.fetchWhatsAppEngineStatus = async function () {
                     ? `Cuenta emisora vinculada: +${data.userPhone} (${data.userName || 'WhatsApp'})`
                     : 'Vinculado y listo para enviar en segundo plano';
             }
+            if (opts.manual) showToast('✅ Motor de WhatsApp conectado y listo.');
         } else if (data.status === 'qr' && data.qrDataUrl) {
             waResettingUntil = 0;
             if (loadingEl) loadingEl.style.display = 'none';
@@ -1135,6 +1210,7 @@ window.fetchWhatsAppEngineStatus = async function () {
             if (data.mode === 'serverless') {
                 ensureCloudPairingListener();
             }
+            if (opts.manual) showToast('📱 Código QR listo para escanear.');
         } else {
             if (qrBox) qrBox.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
@@ -1151,6 +1227,113 @@ window.fetchWhatsAppEngineStatus = async function () {
         if (loadingTextEl) loadingTextEl.textContent = '⏳ Conectando con el motor de WhatsApp...';
         return null;
     }
+};
+
+window.restartWhatsAppEngineFromUI = async function () {
+    const loadingEl = document.getElementById('wa-engine-loading');
+    const loadingTextEl = document.getElementById('wa-engine-loading-text');
+    const qrBox = document.getElementById('wa-engine-qr-box');
+    const qrImg = document.getElementById('wa-engine-qr-img');
+    const connectedBox = document.getElementById('wa-engine-connected-box');
+
+    if (qrBox) qrBox.style.display = 'none';
+    if (connectedBox) connectedBox.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (loadingTextEl) loadingTextEl.textContent = '⚡ Reiniciando motor de WhatsApp y reconectando...';
+    showToast('⚡ Reiniciando motor de WhatsApp...');
+
+    try {
+        const [restartSettled] = await Promise.allSettled([
+            callLocalWhatsAppApi('restart', { method: 'POST' }, 8500),
+            (async () => {
+                const outbox = await readCloudWhatsAppOutbox();
+                outbox.restartRequest = {
+                    id: `restart_${Date.now()}`,
+                    status: 'pending',
+                    requestedAt: Date.now()
+                };
+                await writeCloudWhatsAppOutbox(outbox);
+            })()
+        ]);
+
+        const restartRes = restartSettled.status === 'fulfilled' ? restartSettled.value : null;
+        if (restartRes && restartRes.ok && restartRes.data) {
+            if (restartRes.data.status === 'connected') {
+                showToast('✅ Motor reiniciado y reconectado con éxito.');
+                fetchWhatsAppEngineStatus();
+                return;
+            }
+            if (restartRes.data.qrDataUrl) {
+                waEngineStatus = 'qr';
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (connectedBox) connectedBox.style.display = 'none';
+                if (qrBox) qrBox.style.display = 'flex';
+                if (qrImg) qrImg.src = restartRes.data.qrDataUrl;
+                updateWhatsAppDiagnosticBar(restartRes.data, restartRes.base);
+                updateWhatsAppStatusBadge();
+                if (restartRes.data.mode === 'serverless') ensureCloudPairingListener();
+                showToast('📱 Motor reiniciado. Escanea el código QR.');
+                return;
+            }
+        }
+
+        setTimeout(() => fetchWhatsAppEngineStatus(), 1200);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 2800);
+    } catch (e) {
+        showToast('Reintentando reinicio del motor...');
+    }
+};
+
+window.repairWhatsAppEngineFromUI = async function () {
+    const loadingEl = document.getElementById('wa-engine-loading');
+    const loadingTextEl = document.getElementById('wa-engine-loading-text');
+    const qrBox = document.getElementById('wa-engine-qr-box');
+    const connectedBox = document.getElementById('wa-engine-connected-box');
+
+    if (qrBox) qrBox.style.display = 'none';
+    if (connectedBox) connectedBox.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (loadingTextEl) loadingTextEl.textContent = '🧹 Limpiando cola, reseteando credenciales y reparando motor...';
+    showToast('🧹 Reparando conexión y limpiando cola de WhatsApp...');
+
+    await writeCloudWhatsAppOutbox({
+        messages: [],
+        resetRequest: {
+            id: `repair_${Date.now()}`,
+            status: 'pending',
+            requestedAt: Date.now()
+        },
+        restartRequest: null
+    });
+
+    await resetWhatsAppQr();
+};
+
+window.clearWhatsAppQueueFromUI = async function () {
+    await writeCloudWhatsAppOutbox({ messages: [], resetRequest: null, restartRequest: null });
+    showToast('🗑️ Cola de mensajes pendientes vaciada.');
+    fetchWhatsAppEngineStatus();
+};
+
+window.toggleWhatsAppAdvancedPanel = function () {
+    const panel = document.getElementById('wa-advanced-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+window.onWhatsAppAdvancedConfigChange = function () {
+    const wa = getWhatsAppSettings();
+    const modeEl = document.getElementById('wa-engine-mode');
+    const urlEl = document.getElementById('wa-custom-server-url');
+    const healEl = document.getElementById('wa-auto-heal');
+
+    if (modeEl) wa.engineMode = modeEl.value || 'auto';
+    if (urlEl) wa.customServerUrl = (urlEl.value || '').trim();
+    if (healEl) wa.autoHeal = healEl.checked !== false;
+
+    appState.whatsappSettings = wa;
+    try { localStorage.setItem('jf3d_whatsapp_settings', JSON.stringify(wa)); } catch (e) { }
+    fetchWhatsAppEngineStatus();
 };
 
 window.resetWhatsAppQr = async function () {
@@ -1266,6 +1449,13 @@ window.openWhatsAppModal = function () {
     if (r2Name) r2Name.value = r2.name || '';
     if (r2Phone) r2Phone.value = r2.phone || '';
 
+    const modeEl = document.getElementById('wa-engine-mode');
+    const urlEl = document.getElementById('wa-custom-server-url');
+    const healEl = document.getElementById('wa-auto-heal');
+    if (modeEl) modeEl.value = wa.engineMode || 'auto';
+    if (urlEl) urlEl.value = wa.customServerUrl || '';
+    if (healEl) healEl.checked = wa.autoHeal !== false;
+
     const feedback = document.getElementById('wa-config-feedback');
     if (feedback) feedback.textContent = '';
 
@@ -1293,6 +1483,9 @@ function readWhatsAppModalInputs() {
         notifyOnNewOrder: document.getElementById('wa-notify-orders')?.checked !== false,
         notifyOnNewCost: document.getElementById('wa-notify-costs')?.checked !== false,
         notifyOnDesignRequest: document.getElementById('wa-notify-dreq')?.checked !== false,
+        engineMode: document.getElementById('wa-engine-mode')?.value || 'auto',
+        customServerUrl: (document.getElementById('wa-custom-server-url')?.value || '').trim(),
+        autoHeal: document.getElementById('wa-auto-heal')?.checked !== false,
         recipients: [
             {
                 enabled: document.getElementById('wa-rec1-enabled')?.checked !== false,

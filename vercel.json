@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "functions": {
     "api/whatsapp.js": {
       "maxDuration": 60
@@ -8,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/whatsapp/:action",
-      "destination": "/api/whatsapp.js?action=:action"
+      "destination": "/api/whatsapp?action=:action"
     }
   ]
 }

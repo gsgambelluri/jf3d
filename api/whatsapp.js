@@ -5,11 +5,7 @@ if (typeof dns.setDefaultResultOrder === 'function') {
 const QRCode = require('qrcode');
 const pino = require('pino');
 const {
-    default: makeWASocket,
-    DisconnectReason,
-    fetchLatestBaileysVersion
-} = require('@whiskeysockets/baileys');
-const {
+    getBaileys,
     useSupabaseAuthState,
     clearSupabaseAuth
 } = require('../supabase-baileys-auth');
@@ -22,6 +18,7 @@ let cachedVersion = null;
 async function getBaileysVersion() {
     if (cachedVersion) return cachedVersion;
     try {
+        const { fetchLatestBaileysVersion } = await getBaileys();
         const latest = await Promise.race([
             fetchLatestBaileysVersion(),
             new Promise(r => setTimeout(() => r(null), 2000))
@@ -108,8 +105,27 @@ async function saveEngineStateToSupabase(stateObj) {
     } catch (e) { }
 }
 
-// Runs a pairing session that immediately publishes the QR to Supabase and waits up to waitScanMs for scan completion
+async function clearCloudOutbox() {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/app_settings?on_conflict=key`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                key: 'whatsappOutbox',
+                value: { messages: [], resetRequest: null, restartRequest: null },
+                updated_at: new Date().toISOString()
+            })
+        });
+    } catch (e) { }
+}
+
 async function runCloudPairingSession(waitScanMs = 45000) {
+    const { default: makeWASocket, DisconnectReason } = await getBaileys();
     const version = await getBaileysVersion();
     const { state, saveCreds, flushSave } = await useSupabaseAuthState();
 
@@ -135,7 +151,8 @@ async function runCloudPairingSession(waitScanMs = 45000) {
             finish({
                 status: lastQrDataUrl ? 'qr' : 'connecting',
                 qrDataUrl: lastQrDataUrl,
-                mode: 'serverless'
+                mode: 'serverless',
+                heartbeatAt: Date.now()
             });
         }, waitScanMs);
 
@@ -173,12 +190,12 @@ async function runCloudPairingSession(waitScanMs = 45000) {
                             userName: null,
                             mode: 'serverless'
                         });
-                        // If caller only wanted quick QR generation (waitScanMs <= 8000), resolve immediately
-                        if (waitScanMs <= 8000) {
+                        if (waitScanMs <= 8500) {
                             return finish({
                                 status: 'qr',
                                 qrDataUrl: lastQrDataUrl,
-                                mode: 'serverless'
+                                mode: 'serverless',
+                                heartbeatAt: Date.now()
                             });
                         }
                     } catch (e) { }
@@ -194,7 +211,8 @@ async function runCloudPairingSession(waitScanMs = 45000) {
                         qrDataUrl: null,
                         userPhone,
                         userName,
-                        mode: 'serverless'
+                        mode: 'serverless',
+                        heartbeatAt: Date.now()
                     };
                     await saveEngineStateToSupabase(connectedState);
                     return finish(connectedState);
@@ -203,7 +221,6 @@ async function runCloudPairingSession(waitScanMs = 45000) {
                 if (connection === 'close') {
                     const statusCode = lastDisconnect?.error?.output?.statusCode;
                     if (statusCode === 515) {
-                        // 515 restartRequired right after scanning QR
                         await saveCreds();
                         setTimeout(() => connectSocket(), 400);
                         return;
@@ -214,7 +231,8 @@ async function runCloudPairingSession(waitScanMs = 45000) {
                     return finish({
                         status: lastQrDataUrl ? 'qr' : 'connecting',
                         qrDataUrl: lastQrDataUrl,
-                        mode: 'serverless'
+                        mode: 'serverless',
+                        heartbeatAt: Date.now()
                     });
                 }
             });
@@ -225,6 +243,7 @@ async function runCloudPairingSession(waitScanMs = 45000) {
 }
 
 async function sendMessagesViaCloud(rawPhones, text, imageDataUrl = null) {
+    const { default: makeWASocket, DisconnectReason } = await getBaileys();
     const phones = (Array.isArray(rawPhones) ? rawPhones : [rawPhones])
         .map(p => normalizeArgPhoneDigits(p))
         .filter(Boolean);
@@ -373,26 +392,30 @@ module.exports = async (req, res) => {
     }
 
     const urlPath = (req.url || '').split('?')[0];
-    const action = req.query?.action || urlPath.split('/').pop();
+    const queryStr = (req.url || '').split('?')[1] || '';
+    const searchParams = new URLSearchParams(queryStr);
+    const action = req.query?.action || searchParams.get('action') || urlPath.split('/').pop();
 
     try {
         if (action === 'status' && req.method === 'GET') {
-            const cloudState = await getEngineStateFromSupabase();
-            const isRecent = cloudState && cloudState.heartbeatAt && (Date.now() - cloudState.heartbeatAt < 35000);
+            const forceFresh = searchParams.get('fresh') === '1' || req.query?.fresh === '1';
+            if (!forceFresh) {
+                const cloudState = await getEngineStateFromSupabase();
+                const isRecent = cloudState && cloudState.heartbeatAt && (Date.now() - cloudState.heartbeatAt < 35000);
 
-            if (cloudState && cloudState.status === 'connected') {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json; charset=utf-8');
-                return res.end(JSON.stringify(cloudState));
+                if (cloudState && cloudState.status === 'connected' && isRecent) {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                    return res.end(JSON.stringify(cloudState));
+                }
+
+                if (cloudState && cloudState.status === 'qr' && cloudState.qrDataUrl && isRecent) {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                    return res.end(JSON.stringify(cloudState));
+                }
             }
 
-            if (cloudState && cloudState.status === 'qr' && cloudState.qrDataUrl && isRecent) {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json; charset=utf-8');
-                return res.end(JSON.stringify(cloudState));
-            }
-
-            // Check if we have registered credentials in Supabase
             const { state } = await useSupabaseAuthState();
             if (state?.creds?.registered) {
                 const meId = state.creds.me?.id || '';
@@ -403,7 +426,8 @@ module.exports = async (req, res) => {
                     qrDataUrl: null,
                     userPhone,
                     userName,
-                    mode: 'serverless'
+                    mode: 'serverless',
+                    heartbeatAt: Date.now()
                 };
                 await saveEngineStateToSupabase(connectedObj);
                 res.statusCode = 200;
@@ -411,8 +435,7 @@ module.exports = async (req, res) => {
                 return res.end(JSON.stringify(connectedObj));
             }
 
-            // Otherwise generate a fresh QR code on-demand in the cloud!
-            const pairResult = await runCloudPairingSession(6500);
+            const pairResult = await runCloudPairingSession(7000);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             return res.end(JSON.stringify(pairResult));
@@ -425,8 +448,35 @@ module.exports = async (req, res) => {
             return res.end(JSON.stringify(pairResult));
         }
 
-        if (action === 'logout' && req.method === 'POST') {
+        if (action === 'restart' && req.method === 'POST') {
+            await clearCloudOutbox();
+            const { state } = await useSupabaseAuthState();
+            if (state?.creds?.registered) {
+                const meId = state.creds.me?.id || '';
+                const userPhone = meId.split(':')[0].split('@')[0] || '';
+                const userName = state.creds.me?.name || 'JF 3D Studio';
+                const connectedObj = {
+                    status: 'connected',
+                    qrDataUrl: null,
+                    userPhone,
+                    userName,
+                    mode: 'serverless',
+                    heartbeatAt: Date.now()
+                };
+                await saveEngineStateToSupabase(connectedObj);
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                return res.end(JSON.stringify({ ok: true, ...connectedObj }));
+            }
+            const pairResult = await runCloudPairingSession(7000);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            return res.end(JSON.stringify({ ok: true, ...pairResult }));
+        }
+
+        if ((action === 'logout' || action === 'repair') && req.method === 'POST') {
             await clearSupabaseAuth();
+            await clearCloudOutbox();
             await saveEngineStateToSupabase({
                 status: 'connecting',
                 qrDataUrl: null,
@@ -434,7 +484,7 @@ module.exports = async (req, res) => {
                 userName: null,
                 mode: 'serverless'
             });
-            const pairResult = await runCloudPairingSession(6500);
+            const pairResult = await runCloudPairingSession(7000);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             return res.end(JSON.stringify({ ok: true, ...pairResult }));

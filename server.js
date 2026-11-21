@@ -307,6 +307,47 @@ async function waitForConnectedSocket(timeoutMs = 6000) {
     return waStatus === 'connected' ? waSocket : null;
 }
 
+async function waitForQrOrConnected(timeoutMs = 5500) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        if (waStatus === 'connected' || (waStatus === 'qr' && waQrDataUrl)) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, 250));
+    }
+    return {
+        status: waStatus,
+        qrDataUrl: waQrDataUrl,
+        userPhone: waUserPhone,
+        userName: waUserName,
+        mode: 'local',
+        heartbeatAt: Date.now()
+    };
+}
+
+async function restartWhatsAppEngineSocket() {
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
+    if (connectingWatchdog) {
+        clearTimeout(connectingWatchdog);
+        connectingWatchdog = null;
+    }
+    if (waSocket) {
+        const oldSock = waSocket;
+        waSocket = null;
+        try { oldSock.ev.removeAllListeners(); } catch (e) { }
+        try { oldSock.ws.close(); } catch (e) { }
+    }
+    consecutiveFailures = 0;
+    waStatus = 'connecting';
+    isStartingWa = false;
+    pushWhatsAppStateToCloud();
+    startWhatsAppEngine();
+    return await waitForQrOrConnected(5000);
+}
+
 async function resetWhatsAppEngineSession() {
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
@@ -337,7 +378,8 @@ async function resetWhatsAppEngineSession() {
     waUserName = null;
     isStartingWa = false;
     pushWhatsAppStateToCloud();
-    scheduleReconnect(300);
+    startWhatsAppEngine();
+    return await waitForQrOrConnected(5500);
 }
 
 async function sendMessagesThroughEngine(rawPhones, text, imageDataUrl = null) {
@@ -471,9 +513,18 @@ async function pollWhatsAppCloudOutbox() {
             console.log('🔄 [Cloud Bridge] Solicitud de nuevo QR recibida desde el productivo.');
             outbox.resetRequest.status = 'done';
             outbox.resetRequest.processedAt = Date.now();
-            modified = true;
             await saveCloudOutbox(outbox);
             await resetWhatsAppEngineSession();
+            return;
+        }
+
+        // 1b. Check if Production requested an Engine Restart (without wiping valid session)
+        if (outbox.restartRequest && outbox.restartRequest.status === 'pending') {
+            console.log('⚡ [Cloud Bridge] Solicitud de reinicio de motor recibida desde el productivo.');
+            outbox.restartRequest.status = 'done';
+            outbox.restartRequest.processedAt = Date.now();
+            await saveCloudOutbox(outbox);
+            await restartWhatsAppEngineSocket();
             return;
         }
 
@@ -573,27 +624,44 @@ const server = http.createServer(async (req, res) => {
 
     const parsedUrl = url.parse(req.url, true);
     let pathname = decodeURIComponent(parsedUrl.pathname);
+    const actionParam = parsedUrl.query?.action || '';
 
     // --- WHATSAPP API ENDPOINTS ---
-    if (pathname === '/api/whatsapp/status' && req.method === 'GET') {
+    if ((pathname === '/api/whatsapp/status' || pathname === '/api/whatsapp/pair' || (pathname === '/api/whatsapp' && (actionParam === 'status' || actionParam === 'pair'))) && req.method === 'GET') {
+        if (waStatus !== 'connected' && !waQrDataUrl) {
+            startWhatsAppEngine();
+            await waitForQrOrConnected(4500);
+        }
         return sendJson(res, 200, {
             status: waStatus,
             qrDataUrl: waQrDataUrl,
             userPhone: waUserPhone,
-            userName: waUserName
+            userName: waUserName,
+            mode: 'local',
+            heartbeatAt: Date.now()
         });
     }
 
-    if (pathname === '/api/whatsapp/logout' && req.method === 'POST') {
+    if ((pathname === '/api/whatsapp/restart' || (pathname === '/api/whatsapp' && actionParam === 'restart')) && req.method === 'POST') {
         try {
-            await resetWhatsAppEngineSession();
-            return sendJson(res, 200, { ok: true, message: 'Sesión de WhatsApp reiniciada.' });
+            const stateResult = await restartWhatsAppEngineSocket();
+            return sendJson(res, 200, { ok: true, message: 'Motor de WhatsApp reiniciado.', ...stateResult });
         } catch (err) {
             return sendJson(res, 500, { ok: false, error: err.message });
         }
     }
 
-    if (pathname === '/api/whatsapp/send' && req.method === 'POST') {
+    if ((pathname === '/api/whatsapp/logout' || pathname === '/api/whatsapp/repair' || (pathname === '/api/whatsapp' && (actionParam === 'logout' || actionParam === 'repair'))) && req.method === 'POST') {
+        try {
+            await saveCloudOutbox({ messages: [], resetRequest: null, restartRequest: null });
+            const stateResult = await resetWhatsAppEngineSession();
+            return sendJson(res, 200, { ok: true, message: 'Sesión de WhatsApp reiniciada con nuevo QR.', ...stateResult });
+        } catch (err) {
+            return sendJson(res, 500, { ok: false, error: err.message });
+        }
+    }
+
+    if ((pathname === '/api/whatsapp/send' || (pathname === '/api/whatsapp' && actionParam === 'send')) && req.method === 'POST') {
         try {
             const body = await parseJsonBody(req);
             const phones = Array.isArray(body.phones) ? body.phones : (body.phone ? [body.phone] : []);

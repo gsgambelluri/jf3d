@@ -1,11 +1,18 @@
-const { initAuthCreds, BufferJSON, proto } = require('@whiskeysockets/baileys');
-
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://uhwadjswtcdarhidvqxr.supabase.co').replace(/\/+$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_miv4XL14Dlnc54TO_8ebiQ_4WeAVDzq';
 const AUTH_STORAGE_KEY = 'whatsappCloudAuth';
 
+let baileysModPromise = null;
+async function getBaileys() {
+    if (!baileysModPromise) {
+        baileysModPromise = import('@whiskeysockets/baileys');
+    }
+    return baileysModPromise;
+}
+
 async function loadRawAuthFromSupabase() {
     try {
+        const { BufferJSON } = await getBaileys();
         const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.${AUTH_STORAGE_KEY}&select=value`, {
             headers: {
                 'apikey': SUPABASE_KEY,
@@ -25,6 +32,7 @@ async function loadRawAuthFromSupabase() {
 
 async function saveRawAuthToSupabase(authObj) {
     try {
+        const { BufferJSON } = await getBaileys();
         const serialized = JSON.stringify(authObj, BufferJSON.replacer);
         await fetch(`${SUPABASE_URL}/rest/v1/app_settings?on_conflict=key`, {
             method: 'POST',
@@ -65,6 +73,7 @@ async function clearSupabaseAuth() {
 }
 
 async function useSupabaseAuthState() {
+    const { initAuthCreds, proto } = await getBaileys();
     let stored = await loadRawAuthFromSupabase();
     const creds = (stored && stored.creds) ? stored.creds : initAuthCreds();
     const keys = (stored && stored.keys) ? stored.keys : {};
@@ -128,6 +137,7 @@ async function useSupabaseAuthState() {
 }
 
 module.exports = {
+    getBaileys,
     useSupabaseAuthState,
     clearSupabaseAuth,
     loadRawAuthFromSupabase,
