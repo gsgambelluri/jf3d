@@ -338,6 +338,49 @@
                 </div>
 
                 <div class="section-card">
+                    <!-- Barra de Filtros por Estado de Impresión, Estado de Pago y Búsqueda -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <!-- Tabs de Estado de Impresión -->
+                            <div class="auth-tabs" style="margin-bottom: 0; background: rgba(10, 12, 16, 0.6); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 4px;">
+                                <button type="button" class="auth-tab-btn active" id="filter-order-status-all" onclick="setOrderStatusFilter('all')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    Todos (<span id="count-order-all">0</span>)
+                                </button>
+                                <button type="button" class="auth-tab-btn" id="filter-order-status-En Cola" onclick="setOrderStatusFilter('En Cola')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    ⏳ En Cola (<span id="count-order-cola">0</span>)
+                                </button>
+                                <button type="button" class="auth-tab-btn" id="filter-order-status-Laminando" onclick="setOrderStatusFilter('Laminando')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    🧩 Laminando (<span id="count-order-laminando">0</span>)
+                                </button>
+                                <button type="button" class="auth-tab-btn" id="filter-order-status-Imprimiendo" onclick="setOrderStatusFilter('Imprimiendo')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    🖨️ Imprimiendo (<span id="count-order-imprimiendo">0</span>)
+                                </button>
+                                <button type="button" class="auth-tab-btn" id="filter-order-status-Terminado" onclick="setOrderStatusFilter('Terminado')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    ✅ Terminado (<span id="count-order-terminado">0</span>)
+                                </button>
+                                <button type="button" class="auth-tab-btn" id="filter-order-status-Entregado" onclick="setOrderStatusFilter('Entregado')" style="padding: 6px 11px; font-size: 11.5px; width: auto;">
+                                    🚚 Entregado (<span id="count-order-entregado">0</span>)
+                                </button>
+                            </div>
+
+                            <!-- Filtro por Estado de Pago y Buscador -->
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; justify-content: flex-end; min-width: 260px;">
+                                <select id="orders-filter-payment" onchange="renderOrdersTable()" style="padding: 7px 10px; font-size: 12px; width: auto; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary);">
+                                    <option value="all">💳 Estado Pago: Todos</option>
+                                    <option value="Pendiente">⏳ Pago: Pendiente</option>
+                                    <option value="Seña Pagada">💵 Pago: Seña Pagada</option>
+                                    <option value="Pagado Completo">✅ Pago: Pagado Completo</option>
+                                </select>
+                                <div style="position: relative; min-width: 210px; flex: 1; max-width: 280px;">
+                                    <input type="text" id="orders-search-input" placeholder="🔍 Buscar cliente, producto o #ID..." oninput="renderOrdersTable()" style="padding: 7px 26px 7px 10px; font-size: 12px; width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
+                                </div>
+                                <button type="button" id="btn-reset-orders-filters" class="btn btn-secondary btn-small" onclick="resetOrdersFilters()" style="display: none; width: auto; padding: 6px 10px; font-size: 11px;">
+                                    ✕ Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mobile-table-hint">
                         <span>↔️ Desliza la tabla horizontalmente para ver todos los datos y acciones</span>
                     </div>
@@ -867,7 +910,8 @@
                             </div>
                             <div class="form-group" style="margin-bottom:12px;">
                                 <label style="font-size:10px;">Foto del Producto (se enviará por WhatsApp)</label>
-                                <input type="file" id="calc-prod-image-input" accept="image/*" style="display:none;" onchange="onCalcProductImageSelect(event)">
+                                <input type="file" id="calc-prod-image-input" accept="image/*" style="display:none;"
+                                    onchange="onCalcProductImageSelect(event)">
                                 <div id="calc-prod-image-dropzone" tabindex="0"
                                     onpaste="handleProductImagePaste(event, 'calc')"
                                     ondragover="event.preventDefault(); this.style.borderColor='#25D366';"
@@ -877,17 +921,29 @@
                                     onfocus="this.style.borderColor='var(--jf-blue)'"
                                     onblur="this.style.borderColor='var(--border-color)'"
                                     title="Haz clic aquí y presiona Ctrl+V para pegar una imagen, o usa los botones">
-                                    <img id="calc-prod-image-preview" src="" alt="Vista previa" style="width:46px; height:46px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
-                                    <div style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                                        <span id="calc-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)</span>
+                                    <img id="calc-prod-image-preview" src="" alt="Vista previa"
+                                        style="width:46px; height:46px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
+                                    <div
+                                        style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                                        <span id="calc-prod-image-label"
+                                            style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto (pega con
+                                            <strong>Ctrl+V</strong> o adjunta)</span>
                                         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                            <button type="button" class="btn btn-secondary btn-small" onclick="pasteProductImageFromButton('calc')" style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);" title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
+                                            <button type="button" class="btn btn-secondary btn-small"
+                                                onclick="pasteProductImageFromButton('calc')"
+                                                style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);"
+                                                title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
                                                 📋 Pegar
                                             </button>
-                                            <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('calc-prod-image-input').click()" style="width:auto; padding:4px 10px; font-size:11px;">
+                                            <button type="button" class="btn btn-secondary btn-small"
+                                                onclick="document.getElementById('calc-prod-image-input').click()"
+                                                style="width:auto; padding:4px 10px; font-size:11px;">
                                                 📷 Adjuntar
                                             </button>
-                                            <button type="button" id="btn-clear-calc-image" class="btn btn-secondary btn-small" onclick="clearCalcProductImage()" style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;" title="Quitar foto">
+                                            <button type="button" id="btn-clear-calc-image"
+                                                class="btn btn-secondary btn-small" onclick="clearCalcProductImage()"
+                                                style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;"
+                                                title="Quitar foto">
                                                 ✕
                                             </button>
                                         </div>
@@ -926,8 +982,7 @@
                                     oninput="renderInternalProductTable()"
                                     style="padding: 6px 28px 6px 11px; font-size: 12px; width: 250px; max-width: 100%; border-radius: 6px; background: rgba(10, 12, 16, 0.85); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box;">
                                 <button type="button" id="btn-clear-internal-search"
-                                    onclick="clearInternalCatalogSearch()"
-                                    title="Limpiar búsqueda"
+                                    onclick="clearInternalCatalogSearch()" title="Limpiar búsqueda"
                                     style="display: none; position: absolute; right: 6px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 2px 4px; line-height: 1;">
                                     ✕
                                 </button>
@@ -1350,9 +1405,9 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 6px;">
                     <label>Foto del Producto (se envía por WhatsApp)</label>
-                    <input type="file" id="edit-prod-image-input" accept="image/*" style="display:none;" onchange="onEditProductImageSelect(event)">
-                    <div id="edit-prod-image-dropzone" tabindex="0"
-                        onpaste="handleProductImagePaste(event, 'edit')"
+                    <input type="file" id="edit-prod-image-input" accept="image/*" style="display:none;"
+                        onchange="onEditProductImageSelect(event)">
+                    <div id="edit-prod-image-dropzone" tabindex="0" onpaste="handleProductImagePaste(event, 'edit')"
                         ondragover="event.preventDefault(); this.style.borderColor='#25D366';"
                         ondragleave="this.style.borderColor='var(--border-color)';"
                         ondrop="handleProductImageDrop(event, 'edit')"
@@ -1360,17 +1415,28 @@
                         onfocus="this.style.borderColor='var(--jf-blue)'"
                         onblur="this.style.borderColor='var(--border-color)'"
                         title="Haz clic aquí y presiona Ctrl+V para pegar una imagen, o usa los botones">
-                        <img id="edit-prod-image-preview" src="" alt="Vista previa" style="width:48px; height:48px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
-                        <div style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                            <span id="edit-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷 Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)</span>
+                        <img id="edit-prod-image-preview" src="" alt="Vista previa"
+                            style="width:48px; height:48px; object-fit:cover; border-radius:6px; display:none; border:1px solid var(--border-color);">
+                        <div
+                            style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                            <span id="edit-prod-image-label" style="font-size:11.5px; color:var(--text-secondary);">📷
+                                Sin foto (pega con <strong>Ctrl+V</strong> o adjunta)</span>
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                <button type="button" class="btn btn-secondary btn-small" onclick="pasteProductImageFromButton('edit')" style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);" title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
+                                <button type="button" class="btn btn-secondary btn-small"
+                                    onclick="pasteProductImageFromButton('edit')"
+                                    style="width:auto; padding:4px 10px; font-size:11px; border-color:rgba(0,153,255,0.35); color:var(--jf-blue);"
+                                    title="Pegar imagen copiada en el portapapeles (Ctrl+V)">
                                     📋 Pegar
                                 </button>
-                                <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('edit-prod-image-input').click()" style="width:auto; padding:4px 10px; font-size:11px;">
+                                <button type="button" class="btn btn-secondary btn-small"
+                                    onclick="document.getElementById('edit-prod-image-input').click()"
+                                    style="width:auto; padding:4px 10px; font-size:11px;">
                                     📷 Adjuntar
                                 </button>
-                                <button type="button" id="btn-clear-edit-image" class="btn btn-secondary btn-small" onclick="clearEditProductImage()" style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;" title="Quitar foto">
+                                <button type="button" id="btn-clear-edit-image" class="btn btn-secondary btn-small"
+                                    onclick="clearEditProductImage()"
+                                    style="width:auto; padding:4px 8px; font-size:11px; color:var(--danger); border-color:rgba(239,68,68,0.25); display:none;"
+                                    title="Quitar foto">
                                     ✕
                                 </button>
                             </div>
@@ -1482,16 +1548,20 @@
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
                 <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                    Envía notificaciones automáticas en segundo plano a hasta <strong>2 números de WhatsApp en simultáneo</strong> sin abrir pestañas ni pedir claves externas.
+                    Envía notificaciones automáticas en segundo plano a hasta <strong>2 números de WhatsApp en
+                        simultáneo</strong> sin abrir pestañas ni pedir claves externas.
                 </p>
 
                 <!-- Panel de Control y Vinculación QR en vivo -->
-                <div id="wa-engine-status-card" style="background: rgba(37, 211, 102, 0.07); border: 1px solid rgba(37, 211, 102, 0.28); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                <div id="wa-engine-status-card"
+                    style="background: rgba(37, 211, 102, 0.07); border: 1px solid rgba(37, 211, 102, 0.28); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
                     <!-- Barra de Diagnóstico en Tiempo Real -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="color: var(--text-secondary);">Estado:</span>
-                            <strong id="wa-diag-status-badge" style="color: #f59e0b; background: rgba(245,158,11,0.12); padding: 2px 8px; border-radius: 999px;">Verificando...</strong>
+                            <strong id="wa-diag-status-badge"
+                                style="color: #f59e0b; background: rgba(245,158,11,0.12); padding: 2px 8px; border-radius: 999px;">Verificando...</strong>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px; color: var(--text-secondary);">
                             <span id="wa-diag-channel">🌐 Canal: Automático</span>
@@ -1499,64 +1569,94 @@
                         </div>
                     </div>
 
-                    <div id="wa-engine-loading" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 4px; text-align: center;">
-                        <span id="wa-engine-loading-text" style="font-size: 12.5px; color: var(--text-primary); font-weight: 500;">
+                    <div id="wa-engine-loading"
+                        style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 4px; text-align: center;">
+                        <span id="wa-engine-loading-text"
+                            style="font-size: 12.5px; color: var(--text-primary); font-weight: 500;">
                             ⏳ Verificando estado del motor de WhatsApp...
                         </span>
                     </div>
 
-                    <div id="wa-engine-qr-box" style="display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
-                        <strong style="color: #25D366; font-size: 13px;">📱 Escanea este código QR desde tu WhatsApp</strong>
+                    <div id="wa-engine-qr-box"
+                        style="display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+                        <strong style="color: #25D366; font-size: 13px;">📱 Escanea este código QR desde tu
+                            WhatsApp</strong>
                         <span style="font-size: 11.5px; color: var(--text-secondary); max-width: 460px;">
-                            En tu celular abre <strong>WhatsApp &gt; Dispositivos vinculados &gt; Vincular un dispositivo</strong> y apunta a este código.
+                            En tu celular abre <strong>WhatsApp &gt; Dispositivos vinculados &gt; Vincular un
+                                dispositivo</strong> y apunta a este código.
                         </span>
-                        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
-                            <img id="wa-engine-qr-img" src="" alt="Código QR WhatsApp" style="width: 210px; height: 210px; display: block;">
+                        <div
+                            style="background: white; padding: 10px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+                            <img id="wa-engine-qr-img" src="" alt="Código QR WhatsApp"
+                                style="width: 210px; height: 210px; display: block;">
                         </div>
                     </div>
 
-                    <div id="wa-engine-connected-box" style="display: none; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; text-align: left; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 10px 12px; border-radius: 8px;">
+                    <div id="wa-engine-connected-box"
+                        style="display: none; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; text-align: left; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 10px 12px; border-radius: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 22px;">✅</span>
                             <div>
-                                <strong style="color: #25D366; font-size: 13px; display: block;">Motor de WhatsApp Conectado y Activo</strong>
-                                <span id="wa-engine-connected-info" style="font-size: 11.5px; color: var(--text-secondary);">Vinculado correctamente</span>
+                                <strong style="color: #25D366; font-size: 13px; display: block;">Motor de WhatsApp
+                                    Conectado y Activo</strong>
+                                <span id="wa-engine-connected-info"
+                                    style="font-size: 11.5px; color: var(--text-secondary);">Vinculado
+                                    correctamente</span>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-small" onclick="logoutWhatsAppEngine()" style="width: auto; padding: 5px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239,68,68,0.3);">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="logoutWhatsAppEngine()"
+                            style="width: auto; padding: 5px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239,68,68,0.3);">
                             🔌 Desvincular Cuenta
                         </button>
                     </div>
 
                     <!-- Barra de Control Rápido del Motor (Siempre visible para resolver todo desde la pantalla) -->
-                    <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div
+                        style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px;">🛠️ Controles del Motor y Código QR</span>
-                            <button type="button" onclick="toggleWhatsAppAdvancedPanel()" style="background: transparent; border: none; color: var(--jf-blue); font-size: 11px; cursor: pointer; padding: 0;">
+                            <span
+                                style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px;">🛠️
+                                Controles del Motor y Código QR</span>
+                            <button type="button" onclick="toggleWhatsAppAdvancedPanel()"
+                                style="background: transparent; border: none; color: var(--jf-blue); font-size: 11px; cursor: pointer; padding: 0;">
                                 ⚙️ Opciones avanzadas
                             </button>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px;">
-                            <button type="button" class="btn btn-secondary btn-small" onclick="resetWhatsAppQr()" style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(37, 211, 102, 0.45); color: #25D366; justify-content: center;" title="Cierra la sesión anterior y genera un código QR limpio de inmediato">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="resetWhatsAppQr()"
+                                style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(37, 211, 102, 0.45); color: #25D366; justify-content: center;"
+                                title="Cierra la sesión anterior y genera un código QR limpio de inmediato">
                                 🔄 Nuevo Código QR
                             </button>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="restartWhatsAppEngineFromUI()" style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(0, 153, 255, 0.4); color: var(--jf-blue); justify-content: center;" title="Reinicia la conexión del motor conservando la sesión vinculada">
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="restartWhatsAppEngineFromUI()"
+                                style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(0, 153, 255, 0.4); color: var(--jf-blue); justify-content: center;"
+                                title="Reinicia la conexión del motor conservando la sesión vinculada">
                                 ⚡ Reiniciar Motor
                             </button>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="repairWhatsAppEngineFromUI()" style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; justify-content: center;" title="Limpia mensajes trabados en cola, resetea credenciales y repara la conexión desde cero">
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="repairWhatsAppEngineFromUI()"
+                                style="width: 100%; padding: 6px 8px; font-size: 11px; border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; justify-content: center;"
+                                title="Limpia mensajes trabados en cola, resetea credenciales y repara la conexión desde cero">
                                 🧹 Reparar Todo
                             </button>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="fetchWhatsAppEngineStatus({ manual: true })" style="width: 100%; padding: 6px 8px; font-size: 11px; justify-content: center;" title="Consultar estado del motor ahora mismo">
+                            <button type="button" class="btn btn-secondary btn-small"
+                                onclick="fetchWhatsAppEngineStatus({ manual: true })"
+                                style="width: 100%; padding: 6px 8px; font-size: 11px; justify-content: center;"
+                                title="Consultar estado del motor ahora mismo">
                                 🔍 Verificar Estado
                             </button>
                         </div>
 
                         <!-- Panel desplegable de Opciones Avanzadas -->
-                        <div id="wa-advanced-panel" style="display: none; margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(10, 12, 16, 0.75); border: 1px solid var(--border-color); text-align: left;">
+                        <div id="wa-advanced-panel"
+                            style="display: none; margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(10, 12, 16, 0.75); border: 1px solid var(--border-color); text-align: left;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                                 <div class="form-group" style="margin: 0;">
                                     <label style="font-size: 10.5px;">Modo de Conexión del Motor</label>
-                                    <select id="wa-engine-mode" onchange="onWhatsAppAdvancedConfigChange()" style="font-size: 11.5px; padding: 6px 8px;">
+                                    <select id="wa-engine-mode" onchange="onWhatsAppAdvancedConfigChange()"
+                                        style="font-size: 11.5px; padding: 6px 8px;">
                                         <option value="auto">Automático (Nube + Local)</option>
                                         <option value="cloud">Forzar Motor en la Nube (Productivo)</option>
                                         <option value="local">Forzar Motor Local (PC)</option>
@@ -1564,15 +1664,23 @@
                                 </div>
                                 <div class="form-group" style="margin: 0;">
                                     <label style="font-size: 10.5px;">URL Servidor Local / Túnel (Opcional)</label>
-                                    <input type="text" id="wa-custom-server-url" placeholder="http://localhost:8080" onchange="onWhatsAppAdvancedConfigChange()" style="font-size: 11.5px; padding: 6px 8px;">
+                                    <input type="text" id="wa-custom-server-url" placeholder="http://localhost:8080"
+                                        onchange="onWhatsAppAdvancedConfigChange()"
+                                        style="font-size: 11.5px; padding: 6px 8px;">
                                 </div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); margin: 0; cursor: pointer;">
-                                    <input type="checkbox" id="wa-auto-heal" checked onchange="onWhatsAppAdvancedConfigChange()" style="width: 14px; height: 14px; accent-color: #25D366;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <label
+                                    style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); margin: 0; cursor: pointer;">
+                                    <input type="checkbox" id="wa-auto-heal" checked
+                                        onchange="onWhatsAppAdvancedConfigChange()"
+                                        style="width: 14px; height: 14px; accent-color: #25D366;">
                                     <span>Auto-renovar QR automáticamente si está desconectado</span>
                                 </label>
-                                <button type="button" class="btn btn-secondary btn-small" onclick="clearWhatsAppQueueFromUI()" style="width: auto; padding: 3px 8px; font-size: 10.5px;">
+                                <button type="button" class="btn btn-secondary btn-small"
+                                    onclick="clearWhatsAppQueueFromUI()"
+                                    style="width: auto; padding: 3px 8px; font-size: 10.5px;">
                                     🗑️ Vaciar Cola Pendiente
                                 </button>
                             </div>
@@ -1581,66 +1689,88 @@
                 </div>
 
                 <!-- Eventos a notificar -->
-                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
-                    <strong style="font-size: 12px; color: var(--text-primary); display: block; margin-bottom: 10px;">🔔 ¿Cuándo enviar notificación automática?</strong>
+                <div
+                    style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <strong style="font-size: 12px; color: var(--text-primary); display: block; margin-bottom: 10px;">🔔
+                        ¿Cuándo enviar notificación automática?</strong>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
-                            <input type="checkbox" id="wa-notify-orders" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-orders" checked
+                                style="width: 16px; height: 16px; accent-color: #25D366;">
                             <span>📦 Al registrar un <strong>Pedido Nuevo</strong></span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
-                            <input type="checkbox" id="wa-notify-costs" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-costs" checked
+                                style="width: 16px; height: 16px; accent-color: #25D366;">
                             <span>🧮 Al calcular y guardar un <strong>Costo Nuevo</strong> en la Calculadora</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
-                            <input type="checkbox" id="wa-notify-dreq" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; color: var(--text-primary); margin: 0;">
+                            <input type="checkbox" id="wa-notify-dreq" checked
+                                style="width: 16px; height: 16px; accent-color: #25D366;">
                             <span>🎨 Al ingresar una <strong>Solicitud de Diseño y Costeo</strong></span>
                         </label>
                     </div>
                 </div>
 
                 <!-- Destinatario 1 -->
-                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
-                            <input type="checkbox" id="wa-rec1-enabled" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                <div
+                    style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
+                            <input type="checkbox" id="wa-rec1-enabled" checked
+                                style="width: 16px; height: 16px; accent-color: #25D366;">
                             <span>👤 Destinatario #1</span>
                         </label>
-                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(1)" style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(1)"
+                            style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
                             📤 Probar Envío #1
                         </button>
                     </div>
                     <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 10.5px;">Nombre / Referencia</label>
-                            <input type="text" id="wa-rec1-name" value="Principal" placeholder="Ej. Socio 1" style="font-size: 12px; padding: 7px 9px;">
+                            <input type="text" id="wa-rec1-name" value="Principal" placeholder="Ej. Socio 1"
+                                style="font-size: 12px; padding: 7px 9px;">
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 10.5px;">Número de WhatsApp</label>
-                            <input type="text" id="wa-rec1-phone" value="+5491166123434" placeholder="Ej. 1166123434" style="font-size: 12px; padding: 7px 9px;">
+                            <input type="text" id="wa-rec1-phone" value="+5491166123434" placeholder="Ej. 1166123434"
+                                style="font-size: 12px; padding: 7px 9px;">
                         </div>
                     </div>
                 </div>
 
                 <!-- Destinatario 2 -->
-                <div style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
-                            <input type="checkbox" id="wa-rec2-enabled" checked style="width: 16px; height: 16px; accent-color: #25D366;">
+                <div
+                    style="background: rgba(10, 12, 16, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: 13px; font-weight: 700; color: white;">
+                            <input type="checkbox" id="wa-rec2-enabled" checked
+                                style="width: 16px; height: 16px; accent-color: #25D366;">
                             <span>👤 Destinatario #2 (Opcional)</span>
                         </label>
-                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(2)" style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="testWhatsAppRecipient(2)"
+                            style="width: auto; padding: 4px 10px; font-size: 11px; border-color: rgba(37, 211, 102, 0.35); color: #25D366;">
                             📤 Probar Envío #2
                         </button>
                     </div>
                     <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 10.5px;">Nombre / Referencia</label>
-                            <input type="text" id="wa-rec2-name" placeholder="Ej. Socio 2" style="font-size: 12px; padding: 7px 9px;">
+                            <input type="text" id="wa-rec2-name" placeholder="Ej. Socio 2"
+                                style="font-size: 12px; padding: 7px 9px;">
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label style="font-size: 10.5px;">Número de WhatsApp</label>
-                            <input type="text" id="wa-rec2-phone" placeholder="Ej. 1199887766" style="font-size: 12px; padding: 7px 9px;">
+                            <input type="text" id="wa-rec2-phone" placeholder="Ej. 1199887766"
+                                style="font-size: 12px; padding: 7px 9px;">
                         </div>
                     </div>
                 </div>
@@ -1648,8 +1778,11 @@
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <span id="wa-config-feedback" style="font-size: 11.5px; color: var(--text-secondary);"></span>
                 <div style="display: flex; gap: 8px; margin-left: auto;">
-                    <button class="btn btn-secondary" onclick="closeWhatsAppModal()" style="width: auto; padding: 8px 14px;">Cerrar</button>
-                    <button class="btn btn-primary" onclick="saveWhatsAppConfig()" style="width: auto; padding: 8px 16px; background: #25D366; border-color: #25D366; color: #0a0c10; font-weight: 700;">Guardar Números</button>
+                    <button class="btn btn-secondary" onclick="closeWhatsAppModal()"
+                        style="width: auto; padding: 8px 14px;">Cerrar</button>
+                    <button class="btn btn-primary" onclick="saveWhatsAppConfig()"
+                        style="width: auto; padding: 8px 16px; background: #25D366; border-color: #25D366; color: #0a0c10; font-weight: 700;">Guardar
+                        Números</button>
                 </div>
             </div>
         </div>
@@ -1658,7 +1791,7 @@
     <!-- --- EXTERNAL MAMMOTH LIBRARIES & CORE SCRIPTS --- -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=3.5"></script>
+    <script src="app.js?v=3.6"></script>
     <script>
         // Smooth reveal controls for catalog creator specifically
         const fileObserver = new MutationObserver(() => {

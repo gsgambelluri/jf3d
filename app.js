@@ -4509,12 +4509,61 @@ window.saveNewOrder = function () {
     if (typeof notifyNewOrderWhatsApp === 'function') notifyNewOrderWhatsApp(newOrder);
 };
 
+let currentOrderStatusFilter = 'all';
+
+window.setOrderStatusFilter = function (statusValue) {
+    currentOrderStatusFilter = statusValue || 'all';
+    document.querySelectorAll('[id^="filter-order-status-"]').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`filter-order-status-${currentOrderStatusFilter}`);
+    if (activeBtn) activeBtn.classList.add('active');
+    renderOrdersTable();
+};
+
+window.resetOrdersFilters = function () {
+    currentOrderStatusFilter = 'all';
+    document.querySelectorAll('[id^="filter-order-status-"]').forEach(btn => btn.classList.remove('active'));
+    const allBtn = document.getElementById('filter-order-status-all');
+    if (allBtn) allBtn.classList.add('active');
+
+    const paySelect = document.getElementById('orders-filter-payment');
+    if (paySelect) paySelect.value = 'all';
+
+    const searchInput = document.getElementById('orders-search-input');
+    if (searchInput) searchInput.value = '';
+
+    renderOrdersTable();
+};
+
 window.renderOrdersTable = function () {
     const tbody = document.getElementById('orders-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    if (!appState.orders || appState.orders.length === 0) {
+    const allOrders = appState.orders || [];
+
+    // Update status tab counters
+    const setCounter = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+    setCounter('count-order-all', allOrders.length);
+    setCounter('count-order-cola', allOrders.filter(o => (o.status || 'En Cola') === 'En Cola').length);
+    setCounter('count-order-laminando', allOrders.filter(o => o.status === 'Laminando').length);
+    setCounter('count-order-imprimiendo', allOrders.filter(o => o.status === 'Imprimiendo').length);
+    setCounter('count-order-terminado', allOrders.filter(o => o.status === 'Terminado').length);
+    setCounter('count-order-entregado', allOrders.filter(o => o.status === 'Entregado').length);
+
+    const paymentFilter = document.getElementById('orders-filter-payment')?.value || 'all';
+    const rawSearch = (document.getElementById('orders-search-input')?.value || '').trim();
+    const searchQuery = normalizeSearchStr(rawSearch);
+
+    const resetBtn = document.getElementById('btn-reset-orders-filters');
+    if (resetBtn) {
+        const hasActiveFilter = currentOrderStatusFilter !== 'all' || paymentFilter !== 'all' || rawSearch.length > 0;
+        resetBtn.style.display = hasActiveFilter ? 'inline-flex' : 'none';
+    }
+
+    if (allOrders.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="12" style="text-align:center;color:var(--text-secondary);padding:40px;">
@@ -4525,7 +4574,39 @@ window.renderOrdersTable = function () {
         return;
     }
 
-    appState.orders.forEach(order => {
+    const filteredOrders = allOrders.filter(order => {
+        const orderStatus = order.status || 'En Cola';
+        const orderPayment = order.payment || 'Pendiente';
+
+        if (currentOrderStatusFilter !== 'all' && orderStatus !== currentOrderStatusFilter) {
+            return false;
+        }
+        if (paymentFilter !== 'all' && orderPayment !== paymentFilter) {
+            return false;
+        }
+        if (searchQuery) {
+            const idText = normalizeSearchStr(`#${(order.id || '').slice(-4)}`);
+            const clientText = normalizeSearchStr(order.clientName || '');
+            const prodsText = normalizeSearchStr(Array.isArray(order.products) ? order.products.join(' ') : (order.products || ''));
+            if (!idText.includes(searchQuery) && !clientText.includes(searchQuery) && !prodsText.includes(searchQuery)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    if (filteredOrders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" style="text-align:center;color:var(--text-secondary);padding:36px;">
+                    No se encontraron pedidos para los filtros seleccionados.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    filteredOrders.forEach(order => {
         const tr = document.createElement('tr');
 
         const statusOptions = ['En Cola', 'Laminando', 'Imprimiendo', 'Terminado', 'Entregado'];
