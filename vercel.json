@@ -1,9 +1,14 @@
 {
   "version": 2,
-  "routes": [
+  "functions": {
+    "api/whatsapp.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/whatsapp/:action",
+      "destination": "/api/whatsapp.js?action=:action"
     }
   ]
 }

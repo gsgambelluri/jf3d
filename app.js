@@ -869,20 +869,18 @@ function getWhatsAppSettings() {
 async function callLocalWhatsAppApi(endpoint, options = {}, timeoutMs = 2500) {
     const candidates = [];
     if (window.location.port === '8080') {
-        candidates.push('');
+        candidates.push({ base: '', timeout: Math.max(timeoutMs, 4000) });
     } else {
-        if (window.location.protocol === 'http:') {
-            candidates.push('');
-        }
-        candidates.push('http://localhost:8080');
-        candidates.push('http://127.0.0.1:8080');
+        candidates.push({ base: 'http://localhost:8080', timeout: 1600 });
+        candidates.push({ base: 'http://127.0.0.1:8080', timeout: 1200 });
+        candidates.push({ base: '', timeout: Math.max(timeoutMs, 8500) });
     }
 
-    for (const base of candidates) {
+    for (const cand of candidates) {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        const timer = setTimeout(() => controller.abort(), cand.timeout);
         try {
-            const res = await fetch(`${base}/api/whatsapp/${endpoint}`, {
+            const res = await fetch(`${cand.base}/api/whatsapp/${endpoint}`, {
                 ...options,
                 cache: 'no-store',
                 signal: controller.signal
@@ -893,12 +891,33 @@ async function callLocalWhatsAppApi(endpoint, options = {}, timeoutMs = 2500) {
                 continue;
             }
             const data = await res.json();
-            return { ok: res.ok, status: res.status, data };
+            return { ok: res.ok, status: res.status, data, base: cand.base };
         } catch (e) {
             clearTimeout(timer);
         }
     }
     return null;
+}
+
+let isCloudPairWatcherRunning = false;
+async function ensureCloudPairingListener() {
+    if (isCloudPairWatcherRunning) return;
+    const modal = document.getElementById('modal-whatsapp-config');
+    if (!modal || !modal.classList.contains('active')) return;
+
+    isCloudPairWatcherRunning = true;
+    try {
+        const res = await fetch('/api/whatsapp/pair', { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.status === 'connected') {
+                fetchWhatsAppEngineStatus();
+            }
+        }
+    } catch (e) {
+    } finally {
+        isCloudPairWatcherRunning = false;
+    }
 }
 
 function getSupabaseRestCredentials() {
@@ -1090,17 +1109,10 @@ window.fetchWhatsAppEngineStatus = async function () {
             return null;
         }
 
-        // If reading from Cloud Bridge and heartbeat is older than 35 seconds, the local PC motor is not running
-        if (isFromCloud && data.heartbeatAt && (Date.now() - data.heartbeatAt > 35000) && Date.now() > waResettingUntil) {
-            waEngineStatus = 'disconnected';
-            if (qrBox) qrBox.style.display = 'none';
-            if (connectedBox) connectedBox.style.display = 'none';
-            if (loadingEl) loadingEl.style.display = 'flex';
-            if (loadingTextEl) {
-                loadingTextEl.textContent = '⚠️ El motor de WhatsApp en la PC está detenido. Abre "iniciar-motor-whatsapp.vbs" (o node server.js) para activarlo.';
-            }
-            updateWhatsAppStatusBadge();
-            return null;
+        // If reading from Cloud Bridge and state is stale (>45s) and not connected, ask serverless /api/whatsapp/status to generate a fresh QR
+        if (isFromCloud && data.status !== 'connected' && (!data.heartbeatAt || (Date.now() - data.heartbeatAt > 45000)) && Date.now() > waResettingUntil) {
+            ensureCloudPairingListener();
+            data = { status: 'connecting', qrDataUrl: null };
         }
 
         waEngineStatus = data.status || 'disconnected';
@@ -1120,6 +1132,9 @@ window.fetchWhatsAppEngineStatus = async function () {
             if (connectedBox) connectedBox.style.display = 'none';
             if (qrBox) qrBox.style.display = 'flex';
             if (qrImg) qrImg.src = data.qrDataUrl;
+            if (data.mode === 'serverless') {
+                ensureCloudPairingListener();
+            }
         } else {
             if (qrBox) qrBox.style.display = 'none';
             if (connectedBox) connectedBox.style.display = 'none';
@@ -1142,6 +1157,7 @@ window.resetWhatsAppQr = async function () {
     const loadingEl = document.getElementById('wa-engine-loading');
     const loadingTextEl = document.getElementById('wa-engine-loading-text');
     const qrBox = document.getElementById('wa-engine-qr-box');
+    const qrImg = document.getElementById('wa-engine-qr-img');
     const connectedBox = document.getElementById('wa-engine-connected-box');
 
     waResettingUntil = Date.now() + 5000;
@@ -1154,9 +1170,11 @@ window.resetWhatsAppQr = async function () {
     if (loadingTextEl) loadingTextEl.textContent = '🔄 Desvinculando sesión y generando nuevo código QR...';
 
     try {
-        // Trigger local logout, cloud state clear, and cloud outbox reset simultaneously in parallel
-        await Promise.allSettled([
-            callLocalWhatsAppApi('logout', { method: 'POST' }, 2000),
+        showToast('🔄 Generando nuevo código QR de WhatsApp...');
+
+        // Trigger local/serverless logout, cloud state clear, and cloud outbox reset simultaneously in parallel
+        const [logoutSettled] = await Promise.allSettled([
+            callLocalWhatsAppApi('logout', { method: 'POST' }, 8500),
             writeCloudWhatsAppState({
                 status: 'connecting',
                 qrDataUrl: null,
@@ -1175,11 +1193,25 @@ window.resetWhatsAppQr = async function () {
             })()
         ]);
 
-        showToast('🔄 Sesión desvinculada. Generando nuevo código QR...');
-        setTimeout(() => fetchWhatsAppEngineStatus(), 900);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 2000);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 3400);
-        setTimeout(() => fetchWhatsAppEngineStatus(), 5200);
+        const logoutRes = logoutSettled.status === 'fulfilled' ? logoutSettled.value : null;
+        if (logoutRes && logoutRes.ok && logoutRes.data && logoutRes.data.qrDataUrl) {
+            waResettingUntil = 0;
+            waEngineStatus = 'qr';
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (qrBox) qrBox.style.display = 'flex';
+            if (qrImg) qrImg.src = logoutRes.data.qrDataUrl;
+            updateWhatsAppStatusBadge();
+            if (logoutRes.data.mode === 'serverless') {
+                ensureCloudPairingListener();
+            }
+            return;
+        }
+
+        setTimeout(() => fetchWhatsAppEngineStatus(), 800);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 1900);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 3300);
+        setTimeout(() => fetchWhatsAppEngineStatus(), 5000);
     } catch (e) {
         showToast('Reintentando generar código QR...');
     }
